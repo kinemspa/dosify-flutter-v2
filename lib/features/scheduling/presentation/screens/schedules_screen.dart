@@ -771,17 +771,78 @@ class _SchedulesContentState extends ConsumerState<SchedulesContent>
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-              Text(
-                'Schedule for ${dateFormat.format(selectedDay)}',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+              // Header with close button and navigation
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      final previousDay = selectedDay.subtract(const Duration(days: 1));
+                      Navigator.pop(context);
+                      Future.delayed(const Duration(milliseconds: 100), () {
+                        _showDaySchedule(previousDay);
+                      });
+                    },
+                    icon: const Icon(Icons.chevron_left),
+                    tooltip: 'Previous Day',
+                  ),
+                  Expanded(
+                    child: Text(
+                      dateFormat.format(selectedDay),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      final nextDay = selectedDay.add(const Duration(days: 1));
+                      Navigator.pop(context);
+                      Future.delayed(const Duration(milliseconds: 100), () {
+                        _showDaySchedule(nextDay);
+                      });
+                    },
+                    icon: const Icon(Icons.chevron_right),
+                    tooltip: 'Next Day',
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                    tooltip: 'Close',
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
+              // Today button if not viewing today
+              if (!_isSameDay(selectedDay, DateTime.now()))
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Future.delayed(const Duration(milliseconds: 100), () {
+                        _showDaySchedule(DateTime.now());
+                      });
+                    },
+                    icon: const Icon(Icons.today),
+                    label: const Text('Go to Today'),
+                  ),
+                ),
               if (events.isEmpty)
                 const Expanded(
                   child: Center(
-                    child: Text('No doses scheduled for this day'),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.event_busy, size: 48, color: Colors.grey),
+                        SizedBox(height: 16),
+                        Text(
+                          'No doses scheduled for this day',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
                   ),
                 )
               else
@@ -919,5 +980,11 @@ class _SchedulesContentState extends ConsumerState<SchedulesContent>
         ],
       ),
     );
+  }
+
+  bool _isSameDay(DateTime date1, DateTime date2) {
+    return date1.year == date2.year &&
+           date1.month == date2.month &&
+           date1.day == date2.day;
   }
 }

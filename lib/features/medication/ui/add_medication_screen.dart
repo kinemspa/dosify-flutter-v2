@@ -8,6 +8,7 @@ import '../../../core/di/service_locator.dart';
 import '../../../core/utils/responsive_utils.dart';
 import '../providers/medication_providers.dart';
 import 'package:go_router/go_router.dart';
+import '../../calculator/ui/reconstitution_calculator_screen.dart';
 
 class AddMedicationScreen extends ConsumerStatefulWidget {
   const AddMedicationScreen({Key? key}) : super(key: key);
@@ -933,6 +934,27 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
               'This lyophilized powder requires reconstitution before use. The strength should reflect the final concentration after reconstitution.',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Colors.orange[700],
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Reconstitution Calculator Button
+            Center(
+              child: OutlinedButton.icon(
+                icon: const Icon(Icons.calculate),
+                label: const Text('Open Reconstitution Calculator'),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ReconstitutionCalculatorScreen(),
+                    ),
+                  );
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.orange,
+                  side: BorderSide(color: Colors.orange),
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                ),
               ),
             ),
             const SizedBox(height: 16),
