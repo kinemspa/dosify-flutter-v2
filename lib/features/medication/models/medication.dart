@@ -264,6 +264,7 @@ class MedicationFormData {
   int? minimumStock;
   String storageInstructions = '';
   bool requiresRefrigeration = false;
+  bool enableLowStockNotifications = true;
 
   bool get isValid {
     return name.isNotEmpty && 

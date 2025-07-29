@@ -11,18 +11,28 @@ class ReconstitutionCalculatorScreen extends StatefulWidget {
 
 class _ReconstitutionCalculatorScreenState extends State<ReconstitutionCalculatorScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _powderStrengthController = TextEditingController();
+  final _doseController = TextEditingController();
+  final _syringeSizeController = TextEditingController();
+  final _reconVialSizeController = TextEditingController();
+  
+  String _selectedPowderUnit = 'mg';
+  String _selectedDoseUnit = 'mg';
+  String _selectedSolventUnit = 'ml';
+  String _selectedSolventType = 'Bacteriostatic Water';
+  
+  List<String>? _options;
+  String? _selectedOption;
+  double _concentrationAdjustment = 0.0;
+  bool _showAdvanced = false;
+  
+  ReconstitutionResult? _result;
+  
+  // Missing controllers
   final _powderAmountController = TextEditingController();
   final _solventVolumeController = TextEditingController();
   final _desiredDoseController = TextEditingController();
   final _maxVolumeController = TextEditingController();
-  
-  String _selectedPowderUnit = 'mg';
-  String _selectedSolventUnit = 'ml';
-  String _selectedDoseUnit = 'mg';
-  String _selectedSolventType = 'Bacteriostatic Water';
-  
-  ReconstitutionResult? _result;
-  bool _showAdvanced = false;
   
   final List<String> _powderUnits = ['mg', 'mcg', 'g', 'IU'];
   final List<String> _volumeUnits = ['ml', 'L'];
@@ -35,6 +45,10 @@ class _ReconstitutionCalculatorScreenState extends State<ReconstitutionCalculato
 
   @override
   void dispose() {
+    _powderStrengthController.dispose();
+    _doseController.dispose();
+    _syringeSizeController.dispose();
+    _reconVialSizeController.dispose();
     _powderAmountController.dispose();
     _solventVolumeController.dispose();
     _desiredDoseController.dispose();

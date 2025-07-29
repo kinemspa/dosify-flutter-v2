@@ -3,7 +3,6 @@ import 'core/di/service_locator.dart';
 import 'core/ui/app.dart';
 import 'core/theme/theme.dart';
 import 'features/dashboard/ui/simple_dashboard_screen.dart';
-import 'test_data_script.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -14,10 +13,7 @@ void main() async {
     await setupServiceLocator();
     print('Service locator initialized successfully!');
     
-    // Add test data
-    print('Creating test data...');
-    await addTestData();
-    print('Test data created successfully!');
+    // Initialize complete - no test data in production
     
     // Run the proper app with GoRouter
     print('About to run DosifyApp...');

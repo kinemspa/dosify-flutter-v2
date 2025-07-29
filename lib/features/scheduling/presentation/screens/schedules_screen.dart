@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:table_calendar/table_calendar.dart';
 import '../../../../core/data/models/medication.dart';
 import '../../../medication/providers/medication_providers.dart';
 import '../../models/dose_record.dart';
@@ -21,7 +22,7 @@ class _SchedulesContentState extends ConsumerState<SchedulesContent>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
   }
 
   @override
@@ -82,6 +83,7 @@ class _SchedulesContentState extends ConsumerState<SchedulesContent>
               indicatorColor: Theme.of(context).primaryColor,
               tabs: const [
                 Tab(text: 'Today\'s Doses'),
+                Tab(text: 'Calendar'),
                 Tab(text: 'All Schedules'),
                 Tab(text: 'Adherence'),
               ],
@@ -94,6 +96,7 @@ class _SchedulesContentState extends ConsumerState<SchedulesContent>
               controller: _tabController,
               children: [
                 _buildTodaysDosesTab(),
+                _buildCalendarTab(),
                 _buildAllSchedulesTab(),
                 _buildAdherenceTab(),
               ],
@@ -651,6 +654,147 @@ class _SchedulesContentState extends ConsumerState<SchedulesContent>
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCalendarTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Card(
+            elevation: 2,
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: TableCalendar<DoseRecord>(
+                firstDay: DateTime.utc(2020, 1, 1),
+                lastDay: DateTime.utc(2030, 12, 31),
+                focusedDay: DateTime.now(),
+                calendarFormat: CalendarFormat.month,
+                eventLoader: _getEventsForDay,
+                startingDayOfWeek: StartingDayOfWeek.monday,
+                calendarStyle: CalendarStyle(
+                  outsideDaysVisible: false,
+                  weekendTextStyle: const TextStyle(color: Colors.red),
+                  holidayTextStyle: const TextStyle(color: Colors.red),
+                  markerDecoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor,
+                    shape: BoxShape.circle,
+                  ),
+                  markersMaxCount: 3,
+                ),
+                headerStyle: const HeaderStyle(
+                  formatButtonVisible: false,
+                  titleCentered: true,
+                ),
+                onDaySelected: (selectedDay, focusedDay) {
+                  _showDaySchedule(selectedDay);
+                },
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Calendar Legend',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _buildLegendItem(Colors.green, 'All doses taken'),
+                  _buildLegendItem(Colors.orange, 'Some doses missed'),
+                  _buildLegendItem(Colors.red, 'No doses taken'),
+                  _buildLegendItem(Colors.blue, 'Scheduled doses'),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(Color color, String text) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Container(
+            width: 16,
+            height: 16,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(text),
+        ],
+      ),
+    );
+  }
+
+  List<DoseRecord> _getEventsForDay(DateTime day) {
+    final dosesAsync = ref.read(todaysDosesProvider);
+    return dosesAsync.when(
+      data: (doses) {
+        return doses.where((dose) {
+          final doseDate = DateTime(dose.scheduledTime.year, dose.scheduledTime.month, dose.scheduledTime.day);
+          final selectedDate = DateTime(day.year, day.month, day.day);
+          return doseDate.isAtSameMomentAs(selectedDate);
+        }).toList();
+      },
+      loading: () => [],
+      error: (_, __) => [],
+    );
+  }
+
+  void _showDaySchedule(DateTime selectedDay) {
+    final events = _getEventsForDay(selectedDay);
+    final dateFormat = DateFormat('MMMM d, yyyy');
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.6,
+        maxChildSize: 0.9,
+        minChildSize: 0.3,
+        builder: (context, scrollController) => Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: [
+              Text(
+                'Schedule for ${dateFormat.format(selectedDay)}',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              if (events.isEmpty)
+                const Expanded(
+                  child: Center(
+                    child: Text('No doses scheduled for this day'),
+                  ),
+                )
+              else
+                Expanded(
+                  child: ListView.builder(
+                    controller: scrollController,
+                    itemCount: events.length,
+                    itemBuilder: (context, index) => _buildDoseCard(events[index]),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

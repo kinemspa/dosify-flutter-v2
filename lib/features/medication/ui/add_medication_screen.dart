@@ -167,25 +167,26 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                 ),
               ),
             ),
-            // Form Content
-            Expanded(
-              child: SingleChildScrollView(
-                padding: ResponsiveUtils.getPadding(context),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildBasicInfoSection(),
-                    const SizedBox(height: 24),
-                    _buildStrengthSection(),
-                    const SizedBox(height: 24),
-                    _buildInventorySection(),
-                    const SizedBox(height: 24),
-                    _buildAdditionalInfoSection(),
-                    const SizedBox(height: 60), // More space for better visibility
-                  ],
-                ),
+          // Form Content
+          Expanded(
+            child: SingleChildScrollView(
+              padding: ResponsiveUtils.getPadding(context),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _buildBasicInfoSection(),
+                  const SizedBox(height: 24),
+                  if (_formData.type == MedicationType.tablet) _buildTabletStrengthSection(),
+                  if (_formData.type != MedicationType.tablet) _buildStrengthSection(),
+                  const SizedBox(height: 24),
+                  _buildInventorySection(),
+                  const SizedBox(height: 24),
+                  _buildAdditionalInfoSection(),
+                  const SizedBox(height: 60), // More space for better visibility
+                ],
               ),
             ),
+          ),
           ],
         ),
       ),
@@ -378,6 +379,68 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
     );
   }
 
+  Widget _buildTabletStrengthSection() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Strength Information',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              decoration: InputDecoration(
+                labelText: 'Strength per Tablet *',
+                hintText: 'e.g., 500',
+                border: const OutlineInputBorder(),
+                helperText: 'Enter strength excluding injection units',
+              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Strength is required';
+                }
+                final strength = double.tryParse(value);
+                if (strength == null || strength <= 0) {
+                  return 'Enter a valid strength';
+                }
+                return null;
+              },
+              onChanged: (value) {
+                setState(() {
+                  _formData.strength = double.tryParse(value);
+                });
+              },
+            ),
+            DropdownButtonFormField<StrengthUnit>(
+              decoration: const InputDecoration(
+                labelText: 'Unit',
+                border: OutlineInputBorder(),
+              ),
+              value: _formData.strengthUnit,
+              items: [StrengthUnit.mg, StrengthUnit.g]
+                  .map((unit) => DropdownMenuItem(
+                        value: unit,
+                        child: Text(unit.displayName),
+                      ))
+                  .toList(),
+              onChanged: (value) {
+                if (value != null) {
+                  setState(() {
+                    _formData.strengthUnit = value;
+                  });
+                }
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildInventorySection() {
     return Card(
       child: Padding(
@@ -422,11 +485,16 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: TextFormField(
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Low Stock Alert',
                       hintText: '5',
-                      border: OutlineInputBorder(),
-                      helperText: 'Alert when stock falls below this amount',
+                      border: const OutlineInputBorder(),
+                      helperText: 'Display low stock amount when below this threshold',
+                      suffixIcon: IconButton(
+                        icon: const Icon(Icons.info_outline),
+                        onPressed: () => _showStockHelperDialog(),
+                        tooltip: 'Stock management info',
+                      ),
                     ),
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
@@ -435,6 +503,51 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.blue.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.notifications_active, color: Colors.blue, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Low Inventory Notification',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue[800],
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Enable alerts when stock falls below the minimum threshold',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.blue[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Switch(
+                    value: _formData.enableLowStockNotifications,
+                    onChanged: (value) {
+                      setState(() {
+                        _formData.enableLowStockNotifications = value;
+                      });
+                    },
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -938,5 +1051,43 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
         ],
       ),
     ];
+  }
+
+  void _showStockHelperDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Stock Management Information'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Low Stock Alert Threshold',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Set the minimum stock level that triggers a low stock alert. When your inventory falls below this amount, you\'ll receive notifications to reorder.',
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Notification Options',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Enable low inventory notifications to get timely alerts when it\'s time to restock your medication.',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Got it'),
+          ),
+        ],
+      ),
+    );
   }
 }
