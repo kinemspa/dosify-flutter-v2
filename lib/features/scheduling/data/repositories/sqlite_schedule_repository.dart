@@ -634,7 +634,7 @@ class SqliteScheduleRepository implements ScheduleRepository {
   // Helper method to calculate dose times based on schedule
   List<DateTime> _calculateDoseTimes(MedicationSchedule schedule, DateTime startDate, DateTime endDate) {
     final doseTimes = <DateTime>[];
-    final current = DateTime(startDate.year, startDate.month, startDate.day);
+    var current = DateTime(startDate.year, startDate.month, startDate.day);
 
     while (current.isBefore(endDate) || current.isAtSameMomentAs(endDate)) {
       // Check if this day should have doses based on frequency
@@ -654,14 +654,14 @@ class SqliteScheduleRepository implements ScheduleRepository {
               minute,
             );
             
-            if (doseTime.isAfter(startDate) && doseTime.isBefore(endDate)) {
+            if (doseTime.isAfter(startDate.subtract(const Duration(minutes: 1))) && doseTime.isBefore(endDate)) {
               doseTimes.add(doseTime);
             }
           }
         }
       }
       
-      current.add(const Duration(days: 1));
+      current = current.add(const Duration(days: 1));
     }
 
     return doseTimes;

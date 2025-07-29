@@ -531,14 +531,19 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   }
 
   Widget _buildSaveButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: _isLoading ? null : _saveMedication,
-        style: ElevatedButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 16),
-        ),
-        child: _isLoading
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      child: SizedBox(
+        width: double.infinity,
+        child: ElevatedButton(
+          onPressed: _isLoading ? null : _saveMedication,
+          style: ElevatedButton.styleFrom(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          child: _isLoading
             ? const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -555,6 +560,7 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                 'Save Medication',
                 style: TextStyle(fontSize: 16),
               ),
+        ),
       ),
     );
   }
@@ -672,14 +678,14 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   String _getStrengthLabel() {
     switch (_formData.type) {
       case MedicationType.tablet:
-        return 'Strength per Tablet *';
+        return 'Strength Information *';
       case MedicationType.capsule:
-        return 'Strength per Capsule *';
+        return 'Strength Information *';
       case MedicationType.injection:
         if (_formData.injectionSubtype == InjectionSubtype.prefilledSyringe) {
-          return 'Strength per Pre-filled Syringe *';
+          return 'Strength per Pre Filled Syringe *';
         } else if (_formData.injectionSubtype == InjectionSubtype.preconstitutedVial) {
-          return 'Strength per Pre-constituted Vial *';
+          return 'Strength per Pre Constituted Vial *';
         } else if (_formData.injectionSubtype == InjectionSubtype.lyophilizedVial) {
           return 'Strength per Lyophilized Vial *';
         }

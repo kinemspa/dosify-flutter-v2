@@ -29,6 +29,13 @@ class _SettingsContentState extends State<SettingsContent> {
   String _reminderFrequency = 'Every day';
   bool _darkModeEnabled = false;
   String _timeFormat = '12 hour';
+  bool _backupEnabled = true;
+  String _backupFrequency = 'Daily';
+  bool _lowStockAlertsEnabled = true;
+  bool _adherenceRemindersEnabled = true;
+  String _defaultMedicationView = 'List view';
+  bool _showMedicationImages = true;
+  bool _enableBiometricAuth = false;
   
   @override
   Widget build(BuildContext context) {
