@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'dart:developer' as developer;
 
 class DatabaseService {
   static Database? _database;
@@ -13,21 +14,20 @@ class DatabaseService {
 
   Future<void> initialize() async {
     try {
-      print('Initializing database...');
+      developer.log('Initializing database...', name: 'DatabaseService');
       _database = await _initDatabase();
       final dbPath = await getDatabasesPath();
-      print('Database initialized at path: $dbPath/$_databaseName');
+      developer.log('Database initialized at path: $dbPath/$_databaseName', name: 'DatabaseService');
       
       // Test database write access
       final db = await database;
-      print('Testing database write access...');
+      developer.log('Testing database write access...', name: 'DatabaseService');
       final testResult = await db.rawQuery('SELECT COUNT(*) as count FROM medications');
-      print('Database query test successful: $testResult');
+      developer.log('Database query test successful: $testResult', name: 'DatabaseService');
       
     } catch (e, stackTrace) {
-      print('Error initializing database: $e');
-      print('Stack trace: $stackTrace');
-      rethrow;
+      developer.log('Error initializing database: $e', name: 'DatabaseService', error: e, stackTrace: stackTrace);
+      throw DatabaseException('Failed to initialize database: ${e.toString()}');
     }
   }
 
@@ -35,7 +35,7 @@ class DatabaseService {
     final databasesPath = await getDatabasesPath();
     final path = join(databasesPath, _databaseName);
     
-    print('Database path: $path');
+    developer.log('Database path: $path', name: 'DatabaseService');
     
     return await openDatabase(
       path,
@@ -65,26 +65,23 @@ class DatabaseService {
       )
     ''');
 
-    // Create medication schedules table
+    // Create comprehensive medication schedules table
     await db.execute('''
       CREATE TABLE medication_schedules (
         id TEXT PRIMARY KEY,
         medication_id TEXT NOT NULL,
-        dose_amount REAL NOT NULL,
-        unit TEXT NOT NULL,
+        name TEXT NOT NULL,
+        type TEXT NOT NULL,
         frequency TEXT NOT NULL,
-        times TEXT NOT NULL,
-        start_date TEXT NOT NULL,
-        end_date TEXT,
+        dose_config TEXT NOT NULL,
+        cycling_config TEXT,
+        start_date INTEGER NOT NULL,
+        end_date INTEGER,
         is_active INTEGER NOT NULL DEFAULT 1,
-        cycle_weeks INTEGER,
-        cycle_off_weeks INTEGER,
-        is_cycling INTEGER NOT NULL DEFAULT 0,
-        titration_steps TEXT,
-        reminder_settings TEXT,
-        custom_interval TEXT,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
+        time_slots TEXT NOT NULL,
+        custom_settings TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
         FOREIGN KEY (medication_id) REFERENCES medications (id) ON DELETE CASCADE
       )
     ''');
@@ -124,24 +121,47 @@ class DatabaseService {
       )
     ''');
 
-    // Create dose logs table
+    // Create comprehensive dose records table
     await db.execute('''
-      CREATE TABLE dose_logs (
+      CREATE TABLE dose_records (
         id TEXT PRIMARY KEY,
         schedule_id TEXT NOT NULL,
         medication_id TEXT NOT NULL,
-        scheduled_time TEXT NOT NULL,
-        taken_time TEXT,
-        dose_amount REAL NOT NULL,
-        unit TEXT NOT NULL,
-        status TEXT NOT NULL DEFAULT 'pending',
+        scheduled_time INTEGER NOT NULL,
+        taken_time INTEGER,
+        status TEXT NOT NULL,
+        actual_amount REAL,
+        actual_unit TEXT,
+        volume_drawn REAL,
         notes TEXT,
-        side_effects TEXT,
-        effectiveness_rating INTEGER,
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
+        metadata TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        updated_at INTEGER NOT NULL,
         FOREIGN KEY (schedule_id) REFERENCES medication_schedules (id) ON DELETE CASCADE,
         FOREIGN KEY (medication_id) REFERENCES medications (id) ON DELETE CASCADE
+      )
+    ''');
+
+    // Create adherence stats table (for caching calculated statistics)
+    await db.execute('''
+      CREATE TABLE adherence_stats (
+        id TEXT PRIMARY KEY,
+        medication_id TEXT NOT NULL,
+        schedule_id TEXT,
+        period_start INTEGER NOT NULL,
+        period_end INTEGER NOT NULL,
+        total_doses INTEGER NOT NULL,
+        taken_doses INTEGER NOT NULL,
+        missed_doses INTEGER NOT NULL,
+        on_time_doses INTEGER NOT NULL,
+        late_doses INTEGER NOT NULL,
+        adherence_rate REAL NOT NULL,
+        on_time_rate REAL NOT NULL,
+        average_delay INTEGER NOT NULL,
+        missed_reasons TEXT NOT NULL,
+        calculated_at INTEGER NOT NULL,
+        FOREIGN KEY (medication_id) REFERENCES medications (id) ON DELETE CASCADE,
+        FOREIGN KEY (schedule_id) REFERENCES medication_schedules (id) ON DELETE CASCADE
       )
     ''');
 
@@ -151,8 +171,10 @@ class DatabaseService {
     await db.execute('CREATE INDEX idx_schedules_active ON medication_schedules(is_active)');
     await db.execute('CREATE INDEX idx_inventory_medication_id ON inventory_entries(medication_id)');
     await db.execute('CREATE INDEX idx_inventory_status ON inventory_entries(status)');
-    await db.execute('CREATE INDEX idx_dose_logs_schedule_id ON dose_logs(schedule_id)');
-    await db.execute('CREATE INDEX idx_dose_logs_status ON dose_logs(status)');
+    await db.execute('CREATE INDEX idx_dose_records_schedule_id ON dose_records(schedule_id)');
+    await db.execute('CREATE INDEX idx_dose_records_status ON dose_records(status)');
+    await db.execute('CREATE INDEX idx_dose_records_scheduled_time ON dose_records(scheduled_time)');
+    await db.execute('CREATE INDEX idx_adherence_stats_medication_id ON adherence_stats(medication_id)');
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
@@ -163,9 +185,38 @@ class DatabaseService {
   }
 
   Future<void> closeDatabase() async {
-    if (_database != null) {
-      await _database!.close();
-      _database = null;
+    try {
+      if (_database != null) {
+        await _database!.close();
+        _database = null;
+        developer.log('Database closed successfully', name: 'DatabaseService');
+      }
+    } catch (e, stackTrace) {
+      developer.log('Error closing database: $e', name: 'DatabaseService', error: e, stackTrace: stackTrace);
+      // Don't rethrow - closing database errors are not critical
     }
   }
+
+  // Helper method to handle database operations with consistent error handling
+  Future<T> executeQuery<T>(Future<T> Function() query, {String? operation}) async {
+    try {
+      final db = await database;
+      return await query();
+    } catch (e, stackTrace) {
+      final operationName = operation ?? 'database operation';
+      developer.log('Error during $operationName: $e', name: 'DatabaseService', error: e, stackTrace: stackTrace);
+      throw DatabaseException('$operationName failed: ${e.toString()}');
+    }
+  }
+}
+
+// Custom database exception class
+class DatabaseException implements Exception {
+  final String message;
+  final String? code;
+  
+  const DatabaseException(this.message, [this.code]);
+  
+  @override
+  String toString() => 'DatabaseException: $message${code != null ? ' (Code: $code)' : ''}';
 }

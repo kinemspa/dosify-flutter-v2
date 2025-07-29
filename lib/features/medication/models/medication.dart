@@ -278,12 +278,31 @@ class MedicationFormData {
     switch (type) {
       case MedicationType.tablet:
       case MedicationType.capsule:
+        // Tablets and capsules should not have injection-specific units
         return [StrengthUnit.mg, StrengthUnit.mcg, StrengthUnit.g, StrengthUnit.iu, StrengthUnit.units];
       case MedicationType.injection:
-        return [StrengthUnit.mg, StrengthUnit.mcg, StrengthUnit.g, StrengthUnit.ml, StrengthUnit.iu, StrengthUnit.units, StrengthUnit.cc];
+        // Injection units depend on the subtype
+        switch (injectionSubtype) {
+          case InjectionSubtype.prefilledSyringe:
+            // Pre-filled syringes usually contain total amount per syringe
+            return [StrengthUnit.mg, StrengthUnit.mcg, StrengthUnit.g, StrengthUnit.iu, StrengthUnit.units];
+          case InjectionSubtype.preconstitutedVial:
+          case InjectionSubtype.lyophilizedVial:
+            // Vials are usually concentration per mL
+            return [StrengthUnit.mg, StrengthUnit.mcg, StrengthUnit.g, StrengthUnit.iu, StrengthUnit.units];
+          case InjectionSubtype.injectionPenPrefilled:
+          case InjectionSubtype.injectionPenManual:
+            // Pens usually specify units per dose
+            return [StrengthUnit.iu, StrengthUnit.units, StrengthUnit.mg, StrengthUnit.mcg];
+          case null:
+            return [StrengthUnit.mg, StrengthUnit.mcg, StrengthUnit.g, StrengthUnit.iu, StrengthUnit.units];
+        }
       case MedicationType.topical:
+        // Topical medications are usually concentrations
+        return [StrengthUnit.mg, StrengthUnit.mcg, StrengthUnit.g];
       case MedicationType.liquid:
-        return [StrengthUnit.mg, StrengthUnit.mcg, StrengthUnit.g, StrengthUnit.ml];
+        // Liquid medications are usually concentration per mL
+        return [StrengthUnit.mg, StrengthUnit.mcg, StrengthUnit.g, StrengthUnit.iu, StrengthUnit.units];
     }
   }
 

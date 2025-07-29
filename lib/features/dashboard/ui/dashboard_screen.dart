@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../test_data_script.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -29,55 +30,427 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 // Content-only version for use with BottomNavWrapper
-class DashboardContent extends StatelessWidget {
+class DashboardContent extends StatefulWidget {
   const DashboardContent({Key? key}) : super(key: key);
 
   @override
+  State<DashboardContent> createState() => _DashboardContentState();
+}
+
+class _DashboardContentState extends State<DashboardContent> {
+  @override
   Widget build(BuildContext context) {
     print('Building DashboardContent...');
-    return const SingleChildScrollView(
-      padding: EdgeInsets.all(16.0),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          _buildWelcomeHeader(),
+          const SizedBox(height: 24),
+          _buildMedicationOverviewCard(),
+          const SizedBox(height: 20),
+          _buildQuickStatsRow(),
+          const SizedBox(height: 20),
+          _buildTodayOverviewCard(),
+          const SizedBox(height: 20),
+          _buildQuickActionsGrid(),
+          const SizedBox(height: 20),
+          _buildTestDataButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWelcomeHeader() {
+    final hour = DateTime.now().hour;
+    String greeting;
+    if (hour < 12) {
+      greeting = 'Good Morning';
+    } else if (hour < 17) {
+      greeting = 'Good Afternoon';
+    } else {
+      greeting = 'Good Evening';
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          greeting,
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
+        ),
+        const Text(
+          'Welcome to Dosify',
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Manage your health with confidence',
+          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMedicationOverviewCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(Icons.medication, color: Colors.blue),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Medication Overview',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                      Text(
+                        'Track your medication management',
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildMiniStat('Total Medications', '4', Colors.blue),
+                ),
+                Expanded(
+                  child: _buildMiniStat('Active Schedules', '2', Colors.green),
+                ),
+                Expanded(
+                  child: _buildMiniStat('Next Dose', '2:30 PM', Colors.purple),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMiniStat(String label, String value, Color color) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildQuickStatsRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildStatCard(
+            'Active Medications',
+            '4',
+            Icons.medication,
+            Colors.blue,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatCard(
+            'Due Today',
+            '3',
+            Icons.schedule,
+            Colors.orange,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildStatCard(
+            'Low Stock',
+            '1',
+            Icons.warning,
+            Colors.red,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 24),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            Text(
+              title,
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTodayOverviewCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.today, color: Colors.blue),
+                SizedBox(width: 8),
+                Text(
+                  'Today\'s Overview',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            _buildTodayItem('Morning Insulin', '8:00 AM', true),
+            _buildTodayItem('Vitamin D', '12:00 PM', false),
+            _buildTodayItem('Evening Medication', '6:00 PM', false),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: () => context.go('/schedules'),
+                child: const Text('View All Schedules'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTodayItem(String medication, String time, bool taken) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(
+            taken ? Icons.check_circle : Icons.schedule,
+            color: taken ? Colors.green : Colors.grey,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              medication,
+              style: TextStyle(
+                decoration: taken ? TextDecoration.lineThrough : null,
+                color: taken ? Colors.grey : null,
+              ),
+            ),
+          ),
           Text(
-            'Welcome to Dosify',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 16),
-          Text(
-            'Your comprehensive medication management app with professional-grade reconstitution calculations.',
-            style: TextStyle(fontSize: 16),
-          ),
-          SizedBox(height: 32),
-          _DashboardCard(
-            icon: Icons.medication,
-            title: 'Medications',
-            subtitle: 'Manage your medications',
-            route: '/medications',
-          ),
-          SizedBox(height: 16),
-          _DashboardCard(
-            icon: Icons.calculate,
-            title: 'Calculator',
-            subtitle: 'Reconstitution calculations',
-            route: '/dashboard',
-          ),
-          SizedBox(height: 16),
-          _DashboardCard(
-            icon: Icons.inventory,
-            title: 'Inventory',
-            subtitle: 'Track medication stock',
-            route: '/dashboard',
-          ),
-          SizedBox(height: 16),
-          _DashboardCard(
-            icon: Icons.schedule,
-            title: 'Schedules',
-            subtitle: 'Medication schedules',
-            route: '/schedules',
+            time,
+            style: TextStyle(
+              color: taken ? Colors.grey : Colors.blue,
+              fontWeight: taken ? FontWeight.normal : FontWeight.w500,
+            ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuickActionsGrid() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Quick Actions',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 16),
+        GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: 2,
+          mainAxisSpacing: 12,
+          crossAxisSpacing: 12,
+          childAspectRatio: 1.3,
+          children: [
+            _buildActionCard(
+              'Medications',
+              'Manage your medications',
+              Icons.medication,
+              Colors.blue,
+              '/medications',
+            ),
+            _buildActionCard(
+              'Calculator',
+              'Reconstitution calculations',
+              Icons.calculate,
+              Colors.green,
+              '/calculator',
+            ),
+            _buildActionCard(
+              'Schedules',
+              'Medication schedules',
+              Icons.schedule,
+              Colors.orange,
+              '/schedules',
+            ),
+            _buildActionCard(
+              'Settings',
+              'App preferences',
+              Icons.settings,
+              Colors.purple,
+              '/settings',
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionCard(
+    String title,
+    String subtitle,
+    IconData icon,
+    Color color,
+    String route,
+  ) {
+    return Card(
+      child: InkWell(
+        onTap: () => context.go(route),
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(8),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                flex: 2,
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(icon, color: color, size: 20),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Flexible(
+                flex: 1,
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Flexible(
+                flex: 1,
+                child: Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Colors.grey,
+                    fontSize: 10,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTestDataButton() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const Text(
+              'Test Data',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Add sample data to test the app functionality',
+              style: TextStyle(color: Colors.grey),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () async {
+                try {
+                  await addTestData();
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Test data added successfully!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error adding test data: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('Add Test Data'),
+            ),
+          ],
+        ),
       ),
     );
   }

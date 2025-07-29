@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/data/repositories/medication_repository.dart';
 import '../../../core/data/models/medication.dart' as CoreMedication;
 import '../../../core/di/service_locator.dart';
 import '../../../core/utils/number_formatter.dart';
+import '../providers/medication_providers.dart';
 
-class MedicationScreen extends StatelessWidget {
+class MedicationScreen extends ConsumerWidget {
   const MedicationScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Medications'),
@@ -47,63 +49,39 @@ class MedicationScreen extends StatelessWidget {
 }
 
 // Content-only version for use with BottomNavWrapper
-class MedicationContent extends StatefulWidget {
+class MedicationContent extends ConsumerWidget {
   const MedicationContent({Key? key}) : super(key: key);
 
   @override
-  State<MedicationContent> createState() => _MedicationContentState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final medicationsAsyncValue = ref.watch(medicationListProvider);
 
-class _MedicationContentState extends State<MedicationContent> with WidgetsBindingObserver {
-  List<CoreMedication.Medication> _medications = [];
-  bool _isLoading = true;
-  String? _error;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _loadMedications();
+    return medicationsAsyncValue.when(
+      data: (medications) => Column(children: [
+        // Quick Action Dashboard
+        _buildQuickActionDashboard(context, medications),
+        // Medications List
+        Expanded(child: _buildMedicationsList(context, medications)),
+      ]),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error loading medications', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(e.toString(), style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ElevatedButton(onPressed: () => ref.read(medicationListProvider.notifier).refresh(), child: const Text('Try Again')),
+          ],
+        ),
+      ),
+    );
   }
 
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      // Refresh the list when the app becomes active again
-      _loadMedications();
-    }
-  }
-
-  Future<void> _loadMedications() async {
-    try {
-      setState(() {
-        _isLoading = true;
-        _error = null;
-      });
-      
-      final repository = getIt<MedicationRepository>();
-      final medications = await repository.getAllMedications();
-      
-      setState(() {
-        _medications = medications;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildMedicationsListOld(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Medications'),
@@ -117,7 +95,7 @@ class _MedicationContentState extends State<MedicationContent> with WidgetsBindi
             onSelected: (value) {
               switch (value) {
                 case 'refresh':
-                  _loadMedications();
+                  // Refresh functionality would go here
                   break;
                 case 'calculator':
                   // Navigate to calculator
@@ -162,58 +140,14 @@ class _MedicationContentState extends State<MedicationContent> with WidgetsBindi
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Quick Action Dashboard
-          _buildQuickActionDashboard(),
-          // Medications List
-          Expanded(
-            child: _buildMedicationsList(),
-          ),
-        ],
+      body: const Center(
+        child: Text('This method is no longer used'),
       ),
     );
   }
 
-  Widget _buildMedicationsList() {
-    if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-    
-    if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.error_outline,
-              size: 48,
-              color: Colors.red,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Error loading medications',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _error!,
-              style: Theme.of(context).textTheme.bodySmall,
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _loadMedications,
-              child: const Text('Try Again'),
-            ),
-          ],
-        ),
-      );
-    }
-    
-    if (_medications.isEmpty) {
+  Widget _buildMedicationsList(BuildContext context, List<CoreMedication.Medication> medications) {
+    if (medications.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -248,19 +182,19 @@ class _MedicationContentState extends State<MedicationContent> with WidgetsBindi
     
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      itemCount: _medications.length,
+            itemCount: medications.length,
       itemBuilder: (context, index) {
 return GestureDetector(
           onTap: () {
-            context.go('/medications/detail/${_medications[index].id}');
+            context.go('/medications/detail/${medications[index].id}');
           },
-          child: _buildMedicationCard(_medications[index]),
+          child: _buildMedicationCard(context, medications[index]),
         );
       },
     );
   }
 
-  Widget _buildMedicationCard(CoreMedication.Medication medication) {
+  Widget _buildMedicationCard(BuildContext context, CoreMedication.Medication medication) {
     final strength = NumberFormatter.formatNumber(medication.strength);
     
     return Card(
@@ -269,11 +203,11 @@ return GestureDetector(
         leading: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: _getTypeColor(medication.type),
+            color: _getTypeColor(context, medication.type),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
-            _getTypeIcon(medication.type),
+            _getTypeIcon(context, medication.type),
             color: Colors.white,
             size: 24,
           ),
@@ -291,22 +225,22 @@ return GestureDetector(
               Text('Expires: ${DateFormat('MMM dd, yyyy').format(medication.expirationDate!)}'),
           ],
         ),
-        trailing: _buildAlertBadge(medication),
+        trailing: _buildAlertBadge(context, medication),
         isThreeLine: true,
       ),
     );
   }
 
-  Widget? _buildAlertBadge(CoreMedication.Medication medication) {
+  Widget? _buildAlertBadge(BuildContext context, CoreMedication.Medication medication) {
     if (medication.isLowStock || medication.isExpiringSoon || medication.isExpired) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
         decoration: BoxDecoration(
-          color: _getAlertColor(medication),
+          color: _getAlertColor(context, medication),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
-          _getAlertText(medication),
+          _getAlertText(context, medication),
           style: const TextStyle(
             color: Colors.white,
             fontSize: 10,
@@ -318,7 +252,7 @@ return GestureDetector(
     return null;
   }
 
-  Color _getTypeColor(CoreMedication.MedicationType type) {
+  Color _getTypeColor(BuildContext context, CoreMedication.MedicationType type) {
     switch (type) {
       case CoreMedication.MedicationType.tablet:
         return Colors.blue;
@@ -343,7 +277,7 @@ return GestureDetector(
     }
   }
 
-  IconData _getTypeIcon(CoreMedication.MedicationType type) {
+  IconData _getTypeIcon(BuildContext context, CoreMedication.MedicationType type) {
     switch (type) {
       case CoreMedication.MedicationType.tablet:
       case CoreMedication.MedicationType.capsule:
@@ -366,7 +300,7 @@ return GestureDetector(
     }
   }
 
-  Color _getAlertColor(CoreMedication.Medication medication) {
+  Color _getAlertColor(BuildContext context, CoreMedication.Medication medication) {
     if (medication.isExpired) {
       return Colors.red;
     } else if (medication.isExpiringSoon) {
@@ -377,7 +311,7 @@ return GestureDetector(
     return Colors.grey;
   }
 
-  String _getAlertText(CoreMedication.Medication medication) {
+  String _getAlertText(BuildContext context, CoreMedication.Medication medication) {
     if (medication.isExpired) {
       return 'EXPIRED';
     } else if (medication.isExpiringSoon) {
@@ -388,11 +322,11 @@ return GestureDetector(
     return '';
   }
 
-  Widget _buildQuickActionDashboard() {
-    final lowStockMeds = _medications.where((med) => med.isLowStock).length;
-    final expiringMeds = _medications.where((med) => med.isExpiringSoon || med.isExpired).length;
-    final activeMeds = _medications.length;
-    final injectableMeds = _medications.where((med) => 
+  Widget _buildQuickActionDashboard(BuildContext context, List<CoreMedication.Medication> medications) {
+  final lowStockMeds = medications.where((med) => med.isLowStock).length;
+    final expiringMeds = medications.where((med) => med.isExpiringSoon || med.isExpired).length;
+    final activeMeds = medications.length;
+    final injectableMeds = medications.where((med) => 
       med.type == CoreMedication.MedicationType.injection || 
       med.type == CoreMedication.MedicationType.peptide).length;
 
@@ -406,6 +340,7 @@ return GestureDetector(
             children: [
               Expanded(
                 child: _buildStatCard(
+                  context,
                   'Total Medications',
                   activeMeds.toString(),
                   Icons.medication,
@@ -415,6 +350,7 @@ return GestureDetector(
               const SizedBox(width: 12),
               Expanded(
                 child: _buildStatCard(
+                  context,
                   'Injectable Types',
                   injectableMeds.toString(),
                   Icons.medication_liquid,
@@ -429,32 +365,37 @@ return GestureDetector(
             children: [
               Expanded(
                 child: _buildActionButton(
+                  context,
                   'Low Stock',
                   lowStockMeds.toString(),
                   Icons.inventory_2_outlined,
                   Colors.orange,
                   () => _showFilteredMedications(
+                    context,
                     'Low Stock Medications',
-                    _medications.where((med) => med.isLowStock).toList(),
+                    medications.where((med) => med.isLowStock).toList(),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _buildActionButton(
+                  context,
                   'Expiring',
                   expiringMeds.toString(),
                   Icons.schedule_outlined,
                   Colors.red,
                   () => _showFilteredMedications(
+                    context,
                     'Expiring Medications',
-                    _medications.where((med) => med.isExpiringSoon || med.isExpired).toList(),
+                    medications.where((med) => med.isExpiringSoon || med.isExpired).toList(),
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Expanded(
                 child: _buildActionButton(
+                  context,
                   'Calculator',
                   '',
                   Icons.calculate_outlined,
@@ -472,7 +413,7 @@ return GestureDetector(
     );
   }
 
-  Widget _buildStatCard(String title, String value, IconData icon, Color color) {
+  Widget _buildStatCard(BuildContext context, String title, String value, IconData icon, Color color) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -509,7 +450,7 @@ return GestureDetector(
     );
   }
 
-  Widget _buildActionButton(String title, String badge, IconData icon, Color color, VoidCallback onTap) {
+  Widget _buildActionButton(BuildContext context, String title, String badge, IconData icon, Color color, VoidCallback onTap) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -565,7 +506,7 @@ return GestureDetector(
     );
   }
 
-  void _showFilteredMedications(String title, List<CoreMedication.Medication> medications) {
+  void _showFilteredMedications(BuildContext context, String title, List<CoreMedication.Medication> medications) {
     if (medications.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -624,7 +565,7 @@ return GestureDetector(
                 padding: const EdgeInsets.symmetric(horizontal: 16),
                 itemCount: medications.length,
                 itemBuilder: (context, index) {
-                  return _buildMedicationCard(medications[index]);
+                  return _buildMedicationCard(context, medications[index]);
                 },
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/theme.dart';
 import 'package:go_router/go_router.dart';
 import 'bottom_nav_wrapper.dart';
@@ -7,7 +8,8 @@ import '../../features/medication/ui/medication_screen.dart';
 import '../../features/medication/ui/add_medication_screen.dart';
 import '../../features/medication/ui/medication_detail_screen.dart';
 import '../../features/calculator/ui/reconstitution_calculator_screen.dart';
-import '../../features/scheduling/ui/scheduling_screen.dart';
+import '../../features/scheduling/presentation/screens/schedules_screen.dart';
+import '../../features/scheduling/presentation/screens/add_schedule_screen.dart';
 import '../../features/settings/ui/settings_screen.dart';
 
 class DosifyApp extends StatelessWidget {
@@ -15,12 +17,14 @@ class DosifyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp.router(
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      routerConfig: _router,
-      debugShowCheckedModeBanner: false,
+    return ProviderScope(
+      child: MaterialApp.router(
+        theme: AppTheme.lightTheme,
+        darkTheme: AppTheme.darkTheme,
+        themeMode: ThemeMode.system,
+        routerConfig: _router,
+        debugShowCheckedModeBanner: false,
+      ),
     );
   }
 }
@@ -40,6 +44,7 @@ final _router = GoRouter(
       builder: (context, state) => BottomNavWrapper(
         title: 'Medications',
         floatingActionButton: FloatingActionButton(
+          heroTag: "medicationsFAB",
           onPressed: () => context.go('/medications/add'),
           child: const Icon(Icons.add),
         ),
@@ -61,10 +66,21 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/schedules',
-      builder: (context, state) => const BottomNavWrapper(
+      builder: (context, state) => BottomNavWrapper(
         title: 'Schedules',
-        child: SchedulingContent(),
+        floatingActionButton: FloatingActionButton(
+          heroTag: "schedulesFAB",
+          onPressed: () => context.go('/schedules/add'),
+          child: const Icon(Icons.add),
+        ),
+        child: const SchedulesContent(),
       ),
+      routes: [
+        GoRoute(
+          path: 'add',
+          builder: (context, state) => const AddScheduleScreen(),
+        ),
+      ],
     ),
     GoRoute(
       path: '/settings',

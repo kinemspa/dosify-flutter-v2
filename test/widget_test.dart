@@ -8,23 +8,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:dosify_flutter/main.dart';
+import 'package:dosify_flutter/core/ui/app.dart';
 
 void main() {
-  testWidgets('App starts test', (WidgetTester tester) async {
+  testWidgets('Dosify app loads successfully', (WidgetTester tester) async {
     // Build our app and trigger a frame.
     await tester.pumpWidget(const DosifyApp());
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
-
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Verify that the app loads with the dashboard.
+    expect(find.text('Welcome to Dosify'), findsOneWidget);
+    expect(find.text('Medications'), findsWidgets);
+    expect(find.text('Calculator'), findsWidgets);
+    
+    // Verify navigation elements exist
+    expect(find.byIcon(Icons.medication), findsWidgets);
   });
 }

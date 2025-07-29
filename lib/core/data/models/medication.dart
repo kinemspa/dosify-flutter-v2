@@ -94,6 +94,10 @@ class Medication {
     if (expirationDate == null) return false;
     return expirationDate!.isBefore(DateTime.now());
   }
+  
+  String get displayStrength {
+    return '$strength $unit';
+  }
 }
 
 @JsonEnum()

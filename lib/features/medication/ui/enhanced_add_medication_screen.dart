@@ -811,11 +811,15 @@ class _EnhancedAddMedicationScreenState extends State<EnhancedAddMedicationScree
                       padding: const EdgeInsets.all(16),
                       child: DropdownButtonFormField<MedicationType>(
                         value: _selectedType,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: 'Medication Type *',
                           hintText: 'Select medication type',
-                          prefixIcon: Icon(Icons.category),
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.category),
+                          suffixIcon: Tooltip(
+                            message: 'Choose the type that best matches your medication form (tablet, injection, etc.)',
+                            child: Icon(Icons.help_outline, color: Colors.grey[600]),
+                          ),
                         ),
                         items: MedicationType.values.map((type) {
                           String displayName = type.name.substring(0, 1).toUpperCase() + 

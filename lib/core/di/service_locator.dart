@@ -2,10 +2,10 @@ import 'package:get_it/get_it.dart';
 import '../data/services/database_service.dart';
 import '../data/repositories/medication_repository.dart';
 import '../../features/inventory/repositories/inventory_repository.dart';
-import '../../features/scheduling/repositories/schedule_repository.dart';
+import '../../features/scheduling/data/repositories/schedule_repository.dart';
 import '../data/repositories/sqlite_medication_repository.dart';
 import '../../features/inventory/repositories/sqlite_inventory_repository.dart';
-import '../../features/scheduling/repositories/sqlite_schedule_repository.dart';
+import '../../features/scheduling/data/repositories/sqlite_schedule_repository.dart';
 
 final getIt = GetIt.instance;
 

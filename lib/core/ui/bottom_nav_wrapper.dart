@@ -16,10 +16,21 @@ class BottomNavWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     print('Building BottomNavWrapper with title: $title');
+    final canPop = Navigator.of(context).canPop();
     return Scaffold(
       appBar: AppBar(
         title: Text(title),
         centerTitle: true,
+        leading: canPop ? IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
+        ) : null,
       ),
       body: child,
       floatingActionButton: floatingActionButton,

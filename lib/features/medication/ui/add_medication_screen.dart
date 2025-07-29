@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/medication.dart';
 import '../../../core/data/repositories/medication_repository.dart';
 import '../../../core/data/models/medication.dart' as CoreMedication;
 import '../../../core/di/service_locator.dart';
+import '../../../core/utils/responsive_utils.dart';
+import '../providers/medication_providers.dart';
+import 'package:go_router/go_router.dart';
 
-class AddMedicationScreen extends StatefulWidget {
+class AddMedicationScreen extends ConsumerStatefulWidget {
   const AddMedicationScreen({Key? key}) : super(key: key);
 
   @override
-  State<AddMedicationScreen> createState() => _AddMedicationScreenState();
+  ConsumerState<AddMedicationScreen> createState() => _AddMedicationScreenState();
 }
 
-class _AddMedicationScreenState extends State<AddMedicationScreen> {
+class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _formData = MedicationFormData();
   bool _isLoading = false;
@@ -23,6 +27,16 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       appBar: AppBar(
         title: const Text('Add Medication'),
         centerTitle: true,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/medications');
+            }
+          },
+        ),
         actions: [
           TextButton(
             onPressed: _isLoading ? null : _saveMedication,
@@ -42,11 +56,11 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           children: [
             // Dynamic Helper Card
             Container(
-              margin: const EdgeInsets.all(16.0),
+              margin: ResponsiveUtils.getMargin(context),
               child: Card(
-                elevation: 4,
+                elevation: ResponsiveUtils.getCardElevation(context),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context)),
                   side: BorderSide(
                     color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
                     width: 1,
@@ -54,7 +68,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 ),
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context)),
                     gradient: LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -65,7 +79,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                     ),
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(20.0),
+                    padding: ResponsiveUtils.getPadding(context),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -103,12 +117,48 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                               color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
                             ),
                           ),
-                          child: Text(
-                            _formData.previewText,
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Theme.of(context).colorScheme.onSurface,
-                              height: 1.5,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _formData.previewText,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                  height: 1.5,
+                                ),
+                              ),
+                              if (_formData.isValid) ...[
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    onPressed: _isLoading ? null : _saveMedication,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Theme.of(context).colorScheme.primary,
+                                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                    ),
+                                    child: _isLoading
+                                        ? const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              SizedBox(
+                                                width: 16,
+                                                height: 16,
+                                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                              ),
+                                              SizedBox(width: 8),
+                                              Text('Saving...'),
+                                            ],
+                                          )
+                                        : const Text(
+                                            'Save Medication',
+                                            style: TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
                       ],
@@ -120,7 +170,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             // Form Content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
+                padding: ResponsiveUtils.getPadding(context),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -131,8 +181,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                     _buildInventorySection(),
                     const SizedBox(height: 24),
                     _buildAdditionalInfoSection(),
-                    const SizedBox(height: 32),
-                    _buildSaveButton(),
+                    const SizedBox(height: 60), // More space for better visibility
                   ],
                 ),
               ),
@@ -145,8 +194,12 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
 
   Widget _buildBasicInfoSection() {
     return Card(
+      elevation: ResponsiveUtils.getCardElevation(context),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(ResponsiveUtils.getBorderRadius(context)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: ResponsiveUtils.getPadding(context),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -205,12 +258,19 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 decoration: const InputDecoration(
                   labelText: 'Injection Subtype *',
                   border: OutlineInputBorder(),
+                  helperText: 'Select the specific type of injectable medication',
                 ),
                 value: _formData.injectionSubtype,
                 items: InjectionSubtype.values.map((subtype) {
                   return DropdownMenuItem(
                     value: subtype,
-                    child: Text(subtype.displayName),
+                    child: Tooltip(
+                      message: _getSubtypeDescription(subtype),
+                      child: Text(
+                        subtype.displayName,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                      ),
+                    ),
                   );
                 }).toList(),
                 validator: (value) {
@@ -222,6 +282,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 onChanged: (value) {
                   setState(() {
                     _formData.injectionSubtype = value;
+                    // Reset strength unit to appropriate ones for this subtype
+                    if (!_formData.availableStrengthUnits.contains(_formData.strengthUnit)) {
+                      _formData.strengthUnit = _formData.availableStrengthUnits.first;
+                    }
                   });
                 },
               ),
@@ -257,59 +321,57 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
-            Row(
+            ResponsiveUtils.buildResponsiveRow(
+              context,
               children: [
-                Expanded(
-                  flex: 2,
-                  child: TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: 'Strength *',
-                      hintText: '500',
-                      border: OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Strength is required';
-                      }
-                      final strength = double.tryParse(value);
-                      if (strength == null || strength <= 0) {
-                        return 'Enter a valid strength';
-                      }
-                      return null;
-                    },
-                    onChanged: (value) {
-                      setState(() {
-                        _formData.strength = double.tryParse(value);
-                      });
-                    },
+                TextFormField(
+                  decoration: InputDecoration(
+                    labelText: _getStrengthLabel(),
+                    hintText: _getStrengthHint(),
+                    border: const OutlineInputBorder(),
+                    helperText: _getStrengthHelperText(),
                   ),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Strength is required';
+                    }
+                    final strength = double.tryParse(value);
+                    if (strength == null || strength <= 0) {
+                      return 'Enter a valid strength';
+                    }
+                    return null;
+                  },
+                  onChanged: (value) {
+                    setState(() {
+                      _formData.strength = double.tryParse(value);
+                    });
+                  },
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: DropdownButtonFormField<StrengthUnit>(
-                    decoration: const InputDecoration(
-                      labelText: 'Unit',
-                      border: OutlineInputBorder(),
-                    ),
-                    value: _formData.strengthUnit,
-                    items: _formData.availableStrengthUnits.map((unit) {
-                      return DropdownMenuItem(
-                        value: unit,
-                        child: Text(unit.displayName),
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      if (value != null) {
-                        setState(() {
-                          _formData.strengthUnit = value;
-                        });
-                      }
-                    },
+                DropdownButtonFormField<StrengthUnit>(
+                  decoration: const InputDecoration(
+                    labelText: 'Unit',
+                    border: OutlineInputBorder(),
                   ),
+                  value: _formData.strengthUnit,
+                  items: _formData.availableStrengthUnits.map((unit) {
+                    return DropdownMenuItem(
+                      value: unit,
+                      child: Text(unit.displayName),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    if (value != null) {
+                      setState(() {
+                        _formData.strengthUnit = value;
+                      });
+                    }
+                  },
                 ),
               ],
             ),
+            // Advanced injection fields
+            if (_formData.type == MedicationType.injection) ..._buildAdvancedInjectionFields(),
           ],
         ),
       ),
@@ -336,6 +398,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                       labelText: '${_formData.stockLabel} *',
                       hintText: '30',
                       border: const OutlineInputBorder(),
+                      helperText: _getStockHelperText(),
                     ),
                     keyboardType: TextInputType.number,
                     initialValue: _formData.currentStock.toString(),
@@ -360,9 +423,10 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
                 Expanded(
                   child: TextFormField(
                     decoration: const InputDecoration(
-                      labelText: 'Minimum Stock',
+                      labelText: 'Low Stock Alert',
                       hintText: '5',
                       border: OutlineInputBorder(),
+                      helperText: 'Alert when stock falls below this amount',
                     ),
                     keyboardType: TextInputType.number,
                     onChanged: (value) {
@@ -572,9 +636,8 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       final medication = _formData.toMedication();
       final coreMedication = _convertToCoreMedication(medication);
       
-      // Save to repository
-      final repository = getIt<MedicationRepository>();
-      await repository.addMedication(coreMedication);
+      // Save using provider which will automatically refresh the list
+      await ref.read(medicationListProvider.notifier).addMedication(coreMedication);
       
       print('Saved medication: ${medication.name}');
       
@@ -585,7 +648,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop(true); // Return true to indicate success
+        context.pop(true); // Return true to indicate success
       }
     } catch (e) {
       print('Error saving medication: $e');
@@ -604,5 +667,270 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
         });
       }
     }
+  }
+
+  String _getStrengthLabel() {
+    switch (_formData.type) {
+      case MedicationType.tablet:
+        return 'Strength per Tablet *';
+      case MedicationType.capsule:
+        return 'Strength per Capsule *';
+      case MedicationType.injection:
+        if (_formData.injectionSubtype == InjectionSubtype.prefilledSyringe) {
+          return 'Strength per Pre-filled Syringe *';
+        } else if (_formData.injectionSubtype == InjectionSubtype.preconstitutedVial) {
+          return 'Strength per Pre-constituted Vial *';
+        } else if (_formData.injectionSubtype == InjectionSubtype.lyophilizedVial) {
+          return 'Strength per Lyophilized Vial *';
+        }
+        return 'Strength per Injection *';
+      case MedicationType.topical:
+        return 'Strength per Application *';
+      case MedicationType.liquid:
+        return 'Strength per mL *';
+    }
+  }
+
+  String _getStrengthHelperText() {
+    switch (_formData.type) {
+      case MedicationType.tablet:
+        return 'Amount of active ingredient per tablet';
+      case MedicationType.capsule:
+        return 'Amount of active ingredient per capsule';
+      case MedicationType.injection:
+        if (_formData.injectionSubtype == InjectionSubtype.prefilledSyringe) {
+          return 'Total amount of active ingredient per syringe';
+        } else if (_formData.injectionSubtype == InjectionSubtype.preconstitutedVial) {
+          return 'Concentration of active ingredient per mL';
+        } else if (_formData.injectionSubtype == InjectionSubtype.lyophilizedVial) {
+          return 'Total amount after reconstitution';
+        }
+        return 'Amount of active ingredient per dose';
+      case MedicationType.topical:
+        return 'Concentration of active ingredient';
+      case MedicationType.liquid:
+        return 'Concentration per milliliter';
+    }
+  }
+
+  String _getStockHelperText() {
+    switch (_formData.type) {
+      case MedicationType.tablet:
+        return 'Number of individual tablets you have';
+      case MedicationType.capsule:
+        return 'Number of individual capsules you have';
+      case MedicationType.injection:
+        if (_formData.injectionSubtype == InjectionSubtype.prefilledSyringe) {
+          return 'Number of pre-filled syringes you have';
+        } else if (_formData.injectionSubtype == InjectionSubtype.preconstitutedVial ||
+                   _formData.injectionSubtype == InjectionSubtype.lyophilizedVial) {
+          return 'Volume in mL (for vials) or number of vials';
+        }
+        return 'Amount available for injection';
+      case MedicationType.topical:
+        return 'Number of tubes/containers you have';
+      case MedicationType.liquid:
+        return 'Number of bottles you have';
+    }
+  }
+
+  String _getSubtypeDescription(InjectionSubtype subtype) {
+    switch (subtype) {
+      case InjectionSubtype.prefilledSyringe:
+        return 'Ready-to-use syringe with pre-measured dose';
+      case InjectionSubtype.preconstitutedVial:
+        return 'Liquid medication ready for injection';
+      case InjectionSubtype.injectionPenPrefilled:
+        return 'Pre-filled pen injector (e.g., insulin pen)';
+      case InjectionSubtype.injectionPenManual:
+        return 'Refillable pen injector with cartridges';
+      case InjectionSubtype.lyophilizedVial:
+        return 'Powder requiring reconstitution before use';
+    }
+  }
+
+  String _getStrengthHint() {
+    switch (_formData.type) {
+      case MedicationType.tablet:
+      case MedicationType.capsule:
+        return '500';
+      case MedicationType.injection:
+        if (_formData.injectionSubtype == InjectionSubtype.prefilledSyringe) {
+          return '100';
+        } else if (_formData.injectionSubtype == InjectionSubtype.lyophilizedVial) {
+          return '50';
+        }
+        return '10.0';
+      case MedicationType.topical:
+        return '1.0';
+      case MedicationType.liquid:
+        return '25.0';
+    }
+  }
+
+  List<Widget> _buildAdvancedInjectionFields() {
+    if (_formData.injectionSubtype == null) return [];
+
+    switch (_formData.injectionSubtype!) {
+      case InjectionSubtype.lyophilizedVial:
+        return _buildLyophilizedVialFields();
+      case InjectionSubtype.preconstitutedVial:
+      case InjectionSubtype.prefilledSyringe:
+        return _buildVialFields();
+      case InjectionSubtype.injectionPenPrefilled:
+      case InjectionSubtype.injectionPenManual:
+        return _buildPenFields();
+    }
+  }
+
+  List<Widget> _buildLyophilizedVialFields() {
+    return [
+      const SizedBox(height: 24),
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.orange.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.orange.withOpacity(0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.science, color: Colors.orange, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Reconstitution Required',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Colors.orange[800],
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'This lyophilized powder requires reconstitution before use. The strength should reflect the final concentration after reconstitution.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.orange[700],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: 'Reconstitution Volume (mL)',
+                      hintText: '2.0',
+                      border: OutlineInputBorder(),
+                      helperText: 'Volume of diluent to add',
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    onChanged: (value) {
+                      // Store reconstitution volume - we'll add this to the model later
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: 'Final Volume (mL)',
+                      hintText: '2.1',
+                      border: OutlineInputBorder(),
+                      helperText: 'Total volume after reconstitution',
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    onChanged: (value) {
+                      // Store final volume
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildVialFields() {
+    return [
+      const SizedBox(height: 16),
+      Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              decoration: const InputDecoration(
+                labelText: 'Vial Volume (mL)',
+                hintText: '10.0',
+                border: OutlineInputBorder(),
+                helperText: 'Total volume per vial',
+              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (value) {
+                // Store vial volume
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: TextFormField(
+              decoration: const InputDecoration(
+                labelText: 'Doses per Vial',
+                hintText: '10',
+                border: OutlineInputBorder(),
+                helperText: 'Number of doses in each vial',
+              ),
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                // Store doses per vial
+              },
+            ),
+          ),
+        ],
+      ),
+    ];
+  }
+
+  List<Widget> _buildPenFields() {
+    return [
+      const SizedBox(height: 16),
+      Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              decoration: const InputDecoration(
+                labelText: 'Units per Pen',
+                hintText: '300',
+                border: OutlineInputBorder(),
+                helperText: 'Total units in each pen',
+              ),
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                // Store units per pen
+              },
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: TextFormField(
+              decoration: const InputDecoration(
+                labelText: 'Dose Increment',
+                hintText: '1',
+                border: OutlineInputBorder(),
+                helperText: 'Minimum dose increment',
+              ),
+              keyboardType: TextInputType.number,
+              onChanged: (value) {
+                // Store dose increment
+              },
+            ),
+          ),
+        ],
+      ),
+    ];
   }
 }
