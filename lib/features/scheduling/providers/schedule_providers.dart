@@ -209,6 +209,21 @@ Future<DoseRecord?> doseRecordById(
   return repository.getDoseRecordById(doseId);
 }
 
+@riverpod
+Future<List<DoseRecord>> dosesForDate(
+  DosesForDateRef ref,
+  DateTime date,
+) async {
+  final repository = ref.read(scheduleRepositoryProvider);
+  final startOfDay = DateTime(date.year, date.month, date.day);
+  final endOfDay = DateTime(date.year, date.month, date.day, 23, 59, 59);
+  
+  return repository.getDoseRecords(
+    startDate: startOfDay,
+    endDate: endOfDay,
+  );
+}
+
 // Adherence and statistics providers
 @riverpod
 Future<AdherenceStats> adherenceStats(
@@ -349,5 +364,66 @@ class ScheduleGeneration extends _$ScheduleGeneration {
     // Refresh schedules
     ref.invalidate(scheduleListProvider);
     ref.invalidate(activeSchedulesProvider);
+  }
+}
+
+// Maintenance providers
+@riverpod
+class ScheduleMaintenance extends _$ScheduleMaintenance {
+  @override
+  Future<void> build() async {
+    // Initial build - nothing to do
+  }
+
+  /// Perform comprehensive maintenance
+  Future<dynamic> performMaintenance() async {
+    final repository = ref.read(scheduleRepositoryProvider);
+    
+    // Access the performMaintenance method if it exists
+    if (repository is SqliteScheduleRepository) {
+      final result = await (repository as dynamic).performMaintenance();
+      
+      // Refresh related providers after maintenance
+      ref.invalidate(todaysDosesProvider);
+      ref.invalidate(upcomingDosesProvider);
+      ref.invalidate(overdueDosesProvider);
+      ref.invalidate(scheduleListProvider);
+      ref.invalidate(activeSchedulesProvider);
+      
+      return result;
+    }
+    
+    // Fallback to basic maintenance
+    final generated = await repository.generateMissingDoseRecords();
+    await repository.updateCyclingSchedules();
+    
+    // Refresh related providers
+    ref.invalidate(todaysDosesProvider);
+    ref.invalidate(upcomingDosesProvider);
+    ref.invalidate(overdueDosesProvider);
+    
+    return generated;
+  }
+
+  /// Check if maintenance is needed
+  Future<bool> isMaintenanceNeeded() async {
+    final repository = ref.read(scheduleRepositoryProvider);
+    
+    if (repository is SqliteScheduleRepository) {
+      return await (repository as dynamic).isMaintenanceNeeded();
+    }
+    
+    // Fallback - assume maintenance is needed
+    return true;
+  }
+
+  /// Quick maintenance check and execution
+  Future<bool> performMaintenanceIfNeeded() async {
+    final needed = await isMaintenanceNeeded();
+    if (needed) {
+      await performMaintenance();
+      return true;
+    }
+    return false;
   }
 }

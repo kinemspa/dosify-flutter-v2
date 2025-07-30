@@ -627,6 +627,137 @@ class _DoseRecordByIdProviderElement
   String get doseId => (origin as DoseRecordByIdProvider).doseId;
 }
 
+String _$dosesForDateHash() => r'9653985ac452b508a0c17e58a875d858f0eb37fc';
+
+/// See also [dosesForDate].
+@ProviderFor(dosesForDate)
+const dosesForDateProvider = DosesForDateFamily();
+
+/// See also [dosesForDate].
+class DosesForDateFamily extends Family<AsyncValue<List<DoseRecord>>> {
+  /// See also [dosesForDate].
+  const DosesForDateFamily();
+
+  /// See also [dosesForDate].
+  DosesForDateProvider call(
+    DateTime date,
+  ) {
+    return DosesForDateProvider(
+      date,
+    );
+  }
+
+  @override
+  DosesForDateProvider getProviderOverride(
+    covariant DosesForDateProvider provider,
+  ) {
+    return call(
+      provider.date,
+    );
+  }
+
+  static const Iterable<ProviderOrFamily>? _dependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
+
+  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
+
+  @override
+  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
+      _allTransitiveDependencies;
+
+  @override
+  String? get name => r'dosesForDateProvider';
+}
+
+/// See also [dosesForDate].
+class DosesForDateProvider extends AutoDisposeFutureProvider<List<DoseRecord>> {
+  /// See also [dosesForDate].
+  DosesForDateProvider(
+    DateTime date,
+  ) : this._internal(
+          (ref) => dosesForDate(
+            ref as DosesForDateRef,
+            date,
+          ),
+          from: dosesForDateProvider,
+          name: r'dosesForDateProvider',
+          debugGetCreateSourceHash:
+              const bool.fromEnvironment('dart.vm.product')
+                  ? null
+                  : _$dosesForDateHash,
+          dependencies: DosesForDateFamily._dependencies,
+          allTransitiveDependencies:
+              DosesForDateFamily._allTransitiveDependencies,
+          date: date,
+        );
+
+  DosesForDateProvider._internal(
+    super._createNotifier, {
+    required super.name,
+    required super.dependencies,
+    required super.allTransitiveDependencies,
+    required super.debugGetCreateSourceHash,
+    required super.from,
+    required this.date,
+  }) : super.internal();
+
+  final DateTime date;
+
+  @override
+  Override overrideWith(
+    FutureOr<List<DoseRecord>> Function(DosesForDateRef provider) create,
+  ) {
+    return ProviderOverride(
+      origin: this,
+      override: DosesForDateProvider._internal(
+        (ref) => create(ref as DosesForDateRef),
+        from: from,
+        name: null,
+        dependencies: null,
+        allTransitiveDependencies: null,
+        debugGetCreateSourceHash: null,
+        date: date,
+      ),
+    );
+  }
+
+  @override
+  AutoDisposeFutureProviderElement<List<DoseRecord>> createElement() {
+    return _DosesForDateProviderElement(this);
+  }
+
+  @override
+  bool operator ==(Object other) {
+    return other is DosesForDateProvider && other.date == date;
+  }
+
+  @override
+  int get hashCode {
+    var hash = _SystemHash.combine(0, runtimeType.hashCode);
+    hash = _SystemHash.combine(hash, date.hashCode);
+
+    return _SystemHash.finish(hash);
+  }
+}
+
+@Deprecated('Will be removed in 3.0. Use Ref instead')
+// ignore: unused_element
+mixin DosesForDateRef on AutoDisposeFutureProviderRef<List<DoseRecord>> {
+  /// The parameter `date` of this provider.
+  DateTime get date;
+}
+
+class _DosesForDateProviderElement
+    extends AutoDisposeFutureProviderElement<List<DoseRecord>>
+    with DosesForDateRef {
+  _DosesForDateProviderElement(super.provider);
+
+  @override
+  DateTime get date => (origin as DosesForDateProvider).date;
+}
+
 String _$adherenceStatsHash() => r'f52d8a619398ea37c07a62f09e43c98e757293ad';
 
 /// See also [adherenceStats].
@@ -1361,5 +1492,22 @@ final scheduleGenerationProvider =
 );
 
 typedef _$ScheduleGeneration = AutoDisposeAsyncNotifier<void>;
+String _$scheduleMaintenanceHash() =>
+    r'b7e4dac9072c746585dcbbebff12fdcf5e938ed4';
+
+/// See also [ScheduleMaintenance].
+@ProviderFor(ScheduleMaintenance)
+final scheduleMaintenanceProvider =
+    AutoDisposeAsyncNotifierProvider<ScheduleMaintenance, void>.internal(
+  ScheduleMaintenance.new,
+  name: r'scheduleMaintenanceProvider',
+  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
+      ? null
+      : _$scheduleMaintenanceHash,
+  dependencies: null,
+  allTransitiveDependencies: null,
+);
+
+typedef _$ScheduleMaintenance = AutoDisposeAsyncNotifier<void>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package

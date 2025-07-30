@@ -10,6 +10,12 @@ class SqliteScheduleRepository implements ScheduleRepository {
 
   SqliteScheduleRepository(this._databaseService);
 
+  // Configuration constants
+  static const int _defaultGenerationDays = 14; // Reduced from 30 to 14 days
+  static const int _minDaysAhead = 7; // Minimum days to keep ahead
+  static const int _maxHistoryDays = 365; // Keep dose records for 1 year
+  static const int _cleanupBatchSize = 100; // Cleanup in batches
+
   // Schedule CRUD operations
   @override
   Future<List<MedicationSchedule>> getAllSchedules() async {
@@ -555,7 +561,7 @@ class SqliteScheduleRepository implements ScheduleRepository {
 
       final now = DateTime.now();
       final genStartDate = startDate ?? schedule.startDate;
-      final genEndDate = endDate ?? schedule.endDate ?? now.add(const Duration(days: 30));
+      final genEndDate = endDate ?? schedule.endDate ?? now.add(Duration(days: _defaultGenerationDays));
 
       // Generate dose records based on schedule frequency and time slots
       final dosesToGenerate = _calculateDoseTimes(schedule, genStartDate, genEndDate);
@@ -590,20 +596,110 @@ class SqliteScheduleRepository implements ScheduleRepository {
   }
 
   @override
-  Future<int> generateMissingDoseRecords() async {
+  Future<int> generateMissingDoseRecords() async {
     try {
       final activeSchedules = await getActiveSchedules();
       int generated = 0;
 
       for (final schedule in activeSchedules) {
-        await generateDoseRecords(schedule.id);
-        generated++;
+        final doses = await getDoseRecords(scheduleId: schedule.id);
+        final upcomingDoses = doses.where((d) => d.scheduledTime.isAfter(DateTime.now())).toList();
+
+        if (upcomingDoses.isEmpty || upcomingDoses.length < _minDaysAhead) {
+          await generateDoseRecords(schedule.id);
+          generated++;
+        }
       }
 
       return generated;
     } catch (e) {
       print('Error generating missing dose records: $e');
       return 0;
+    }
+  }
+
+  /// Cleanup old dose records older than maxHistoryDays
+  Future<void> cleanupOldDoseRecords() async {
+    try {
+      final cutoffDate = DateTime.now().subtract(Duration(days: _maxHistoryDays));
+      final db = await _databaseService.database;
+
+      final deletedCount = await db.delete(
+        'dose_records',
+        where: 'scheduled_time < ?',
+        whereArgs: [cutoffDate.millisecondsSinceEpoch],
+      );
+      print('Cleaned up $deletedCount old dose records');
+    } catch (e) {
+      print('Error cleaning up old dose records: $e');
+    }
+  }
+
+  /// Comprehensive maintenance method that should be called periodically
+  Future<MaintenanceResult> performMaintenance() async {
+    try {
+      print('Starting schedule maintenance...');
+      final stopwatch = Stopwatch()..start();
+      
+      // 1. Clean up old records
+      await cleanupOldDoseRecords();
+      
+      // 2. Generate missing dose records for active schedules
+      final generatedCount = await generateMissingDoseRecords();
+      
+      // 3. Update cycling schedules
+      await updateCyclingSchedules();
+      
+      // 4. Get statistics
+      final db = await _databaseService.database;
+      final totalDosesCount = Sqflite.firstIntValue(
+        await db.rawQuery('SELECT COUNT(*) FROM dose_records')
+      ) ?? 0;
+      
+      final activeSchedulesCount = (await getActiveSchedules()).length;
+      
+      stopwatch.stop();
+      print('Schedule maintenance completed in ${stopwatch.elapsedMilliseconds}ms');
+      
+      return MaintenanceResult(
+        success: true,
+        generatedSchedules: generatedCount,
+        totalDoseRecords: totalDosesCount,
+        activeSchedules: activeSchedulesCount,
+        executionTimeMs: stopwatch.elapsedMilliseconds,
+        timestamp: DateTime.now(),
+      );
+    } catch (e) {
+      print('Error during maintenance: $e');
+      return MaintenanceResult(
+        success: false,
+        error: e.toString(),
+        timestamp: DateTime.now(),
+      );
+    }
+  }
+
+  /// Check if maintenance is needed (called more frequently)
+  Future<bool> isMaintenanceNeeded() async {
+    try {
+      final activeSchedules = await getActiveSchedules();
+      
+      for (final schedule in activeSchedules) {
+        final upcomingDoses = await getDoseRecords(
+          scheduleId: schedule.id,
+          startDate: DateTime.now(),
+          endDate: DateTime.now().add(Duration(days: _minDaysAhead)),
+        );
+        
+        if (upcomingDoses.length < _minDaysAhead) {
+          return true; // Need to generate more doses
+        }
+      }
+      
+      return false;
+    } catch (e) {
+      print('Error checking maintenance need: $e');
+      return true; // Err on the side of caution
     }
   }
 
@@ -691,5 +787,36 @@ class SqliteScheduleRepository implements ScheduleRepository {
         // TODO: Implement custom frequency logic based on customSettings
         return true;
     }
+  }
+}
+
+/// Result class for maintenance operations
+class MaintenanceResult {
+  final bool success;
+  final int generatedSchedules;
+  final int totalDoseRecords;
+  final int activeSchedules;
+  final int executionTimeMs;
+  final DateTime timestamp;
+  final String? error;
+
+  const MaintenanceResult({
+    required this.success,
+    this.generatedSchedules = 0,
+    this.totalDoseRecords = 0,
+    this.activeSchedules = 0,
+    this.executionTimeMs = 0,
+    required this.timestamp,
+    this.error,
+  });
+
+  @override
+  String toString() {
+    if (!success) {
+      return 'MaintenanceResult(success: false, error: $error, timestamp: $timestamp)';
+    }
+    return 'MaintenanceResult(success: true, generated: $generatedSchedules, '
+           'totalDoses: $totalDoseRecords, activeSchedules: $activeSchedules, '
+           'executionTime: ${executionTimeMs}ms, timestamp: $timestamp)';
   }
 }

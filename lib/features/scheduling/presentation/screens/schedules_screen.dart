@@ -18,11 +18,15 @@ class SchedulesContent extends ConsumerStatefulWidget {
 class _SchedulesContentState extends ConsumerState<SchedulesContent>
     with TickerProviderStateMixin {
   late TabController _tabController;
+  CalendarFormat _calendarFormat = CalendarFormat.month;
+  DateTime _focusedDay = DateTime.now();
+  DateTime? _selectedDay;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
+    _selectedDay = DateTime.now();
   }
 
   @override
@@ -659,75 +663,144 @@ class _SchedulesContentState extends ConsumerState<SchedulesContent>
   }
 
   Widget _buildCalendarTab() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Card(
-            elevation: 2,
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: TableCalendar<DoseRecord>(
-                firstDay: DateTime.utc(2020, 1, 1),
-                lastDay: DateTime.utc(2030, 12, 31),
-                focusedDay: DateTime.now(),
-                calendarFormat: CalendarFormat.month,
-                eventLoader: _getEventsForDay,
-                startingDayOfWeek: StartingDayOfWeek.monday,
-                calendarStyle: CalendarStyle(
-                  todayDecoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor.withOpacity(0.3),
-                    shape: BoxShape.circle,
+    return Column(
+      children: [
+        // Calendar view selector
+        Container(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Calendar View',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
                   ),
-                  selectedDecoration: BoxDecoration(
-                    color: Theme.of(context).primaryColor,
-                    shape: BoxShape.circle,
-                  ),
-                  markerDecoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.secondary,
-                    shape: BoxShape.circle,
-                  ),
-                  markersMaxCount: 1,
-                  weekendTextStyle: TextStyle(color: Colors.red[600]),
-                  outsideDaysVisible: false,
                 ),
-                headerStyle: HeaderStyle(
-                  formatButtonVisible: false,
-                  titleCentered: true,
-                  titleTextStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  leftChevronIcon: const Icon(Icons.chevron_left, color: Colors.grey),
-                  rightChevronIcon: const Icon(Icons.chevron_right, color: Colors.grey),
-                ),
-                onDaySelected: (selectedDay, focusedDay) {
-                  _showDaySchedule(selectedDay);
+              ),
+              SegmentedButton<CalendarFormat>(
+                segments: const [
+                  ButtonSegment(
+                    value: CalendarFormat.month,
+                    label: Text('Month'),
+                    icon: Icon(Icons.calendar_month),
+                  ),
+                  ButtonSegment(
+                    value: CalendarFormat.twoWeeks,
+                    label: Text('2 Weeks'),
+                    icon: Icon(Icons.view_week),
+                  ),
+                  ButtonSegment(
+                    value: CalendarFormat.week,
+                    label: Text('Week'),
+                    icon: Icon(Icons.view_day),
+                  ),
+                ],
+                selected: {_calendarFormat},
+                onSelectionChanged: (Set<CalendarFormat> selection) {
+                  setState(() {
+                    _calendarFormat = selection.first;
+                  });
                 },
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Calendar Legend',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+        ),
+        
+        // Calendar
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              children: [
+                Card(
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: TableCalendar<DoseRecord>(
+                      firstDay: DateTime.utc(2020, 1, 1),
+                      lastDay: DateTime.utc(2030, 12, 31),
+                      focusedDay: _focusedDay,
+                      selectedDayPredicate: (day) => _selectedDay != null && isSameDay(_selectedDay!, day),
+                      calendarFormat: _calendarFormat,
+                      eventLoader: _getEventsForDay,
+                      startingDayOfWeek: StartingDayOfWeek.monday,
+                      availableCalendarFormats: const {
+                        CalendarFormat.month: 'Month',
+                        CalendarFormat.twoWeeks: '2 weeks',
+                        CalendarFormat.week: 'Week',
+                      },
+                      calendarStyle: CalendarStyle(
+                        todayDecoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor.withOpacity(0.3),
+                          shape: BoxShape.circle,
+                        ),
+                        selectedDecoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          shape: BoxShape.circle,
+                        ),
+                        markerDecoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.secondary,
+                          shape: BoxShape.circle,
+                        ),
+                        markersMaxCount: 3,
+                        weekendTextStyle: TextStyle(color: Colors.red[400]),
+                        outsideDaysVisible: false,
+                      ),
+                      headerStyle: HeaderStyle(
+                        formatButtonVisible: false,
+                        titleCentered: true,
+                        titleTextStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        leftChevronIcon: const Icon(Icons.chevron_left, color: Colors.grey),
+                        rightChevronIcon: const Icon(Icons.chevron_right, color: Colors.grey),
+                      ),
+                      onDaySelected: (selectedDay, focusedDay) {
+                        setState(() {
+                          _selectedDay = selectedDay;
+                          _focusedDay = focusedDay;
+                        });
+                        _showDaySchedule(selectedDay);
+                      },
+                      onFormatChanged: (format) {
+                        setState(() {
+                          _calendarFormat = format;
+                        });
+                      },
+                      onPageChanged: (focusedDay) {
+                        setState(() {
+                          _focusedDay = focusedDay;
+                        });
+                      },
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  _buildLegendItem(Colors.green, 'All doses taken'),
-                  _buildLegendItem(Colors.orange, 'Some doses missed'),
-                  _buildLegendItem(Colors.red, 'No doses taken'),
-                  _buildLegendItem(Colors.blue, 'Scheduled doses'),
-                ],
-              ),
+                ),
+                const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Calendar Legend',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        _buildLegendItem(Colors.green, 'All doses taken'),
+                        _buildLegendItem(Colors.orange, 'Some doses missed'),
+                        _buildLegendItem(Colors.red, 'No doses taken'),
+                        _buildLegendItem(Colors.blue, 'Scheduled doses'),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -752,22 +825,18 @@ class _SchedulesContentState extends ConsumerState<SchedulesContent>
   }
 
   List<DoseRecord> _getEventsForDay(DateTime day) {
-    final dosesAsync = ref.read(todaysDosesProvider);
+    // Use the dosesForDate provider to get doses for any specific date
+    final dosesAsync = ref.read(dosesForDateProvider(day));
     return dosesAsync.when(
-      data: (doses) {
-        return doses.where((dose) {
-          final doseDate = DateTime(dose.scheduledTime.year, dose.scheduledTime.month, dose.scheduledTime.day);
-          final selectedDate = DateTime(day.year, day.month, day.day);
-          return doseDate.isAtSameMomentAs(selectedDate);
-        }).toList();
-      },
+      data: (doses) => doses,
       loading: () => [],
       error: (_, __) => [],
     );
   }
 
   void _showDaySchedule(DateTime selectedDay) {
-    final events = _getEventsForDay(selectedDay);
+    // Watch the doses for the selected day to show in the bottom sheet
+    final dosesAsync = ref.watch(dosesForDateProvider(selectedDay));
     final dateFormat = DateFormat('MMMM d, yyyy');
     
     showModalBottomSheet(
@@ -839,30 +908,54 @@ class _SchedulesContentState extends ConsumerState<SchedulesContent>
                     label: const Text('Go to Today'),
                   ),
                 ),
-              if (events.isEmpty)
-                const Expanded(
+              dosesAsync.when(
+                data: (doses) {
+                  if (doses.isEmpty) {
+                    return const Expanded(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.event_busy, size: 48, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text(
+                              'No doses scheduled for this day',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                  return Expanded(
+                    child: ListView.builder(
+                      controller: scrollController,
+                      itemCount: doses.length,
+                      itemBuilder: (context, index) => _buildDoseCard(doses[index]),
+                    ),
+                  );
+                },
+                loading: () => const Expanded(
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
+                ),
+                error: (error, stack) => Expanded(
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.event_busy, size: 48, color: Colors.grey),
-                        SizedBox(height: 16),
+                        const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                        const SizedBox(height: 16),
                         Text(
-                          'No doses scheduled for this day',
-                          style: TextStyle(color: Colors.grey),
+                          'Error loading doses',
+                          style: TextStyle(color: Colors.grey[600]),
                         ),
                       ],
                     ),
                   ),
-                )
-              else
-                Expanded(
-                  child: ListView.builder(
-                    controller: scrollController,
-                    itemCount: events.length,
-                    itemBuilder: (context, index) => _buildDoseCard(events[index]),
-                  ),
                 ),
+              ),
             ],
           ),
         ),
