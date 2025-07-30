@@ -906,8 +906,9 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
       case InjectionSubtype.lyophilizedVial:
         return _buildLyophilizedVialFields();
       case InjectionSubtype.preconstitutedVial:
-      case InjectionSubtype.prefilledSyringe:
         return _buildVialFields();
+      case InjectionSubtype.prefilledSyringe:
+        return _buildPrefilledSyringeFields();
       case InjectionSubtype.injectionPenPrefilled:
       case InjectionSubtype.injectionPenManual:
         return _buildPenFields();
@@ -1001,6 +1002,58 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildPrefilledSyringeFields() {
+    return [
+      const SizedBox(height: 16),
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.blue.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.blue.withOpacity(0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.medication_liquid, color: Colors.blue, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Pre-filled Syringe Information',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Colors.blue[800],
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Pre-filled syringes contain a fixed dose and volume. No additional vial information is needed.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.blue[700],
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              decoration: const InputDecoration(
+                labelText: 'Syringe Volume (mL)',
+                hintText: '1.0',
+                border: OutlineInputBorder(),
+                helperText: 'Total volume of each pre-filled syringe',
+              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              onChanged: (value) {
+                // Store syringe volume
+              },
             ),
           ],
         ),
