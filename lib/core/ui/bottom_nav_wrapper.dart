@@ -36,21 +36,27 @@ class BottomNavWrapper extends StatelessWidget {
                 onTap: () => context.go('/user-account'),
                 child: Padding(
                   padding: const EdgeInsets.all(8.0),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 16,
-                        backgroundImage: const NetworkImage('https://i.pravatar.cc/150?u=a042581f4e29026704d'),
-                      ),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'John Doe',
-                        style: TextStyle(fontSize: 12),
-                      )
-                    ],
+                  child: CircleAvatar(
+                    radius: 16,
+                    backgroundImage: const NetworkImage('https://i.pravatar.cc/150?u=a042581f4e29026704d'),
                   ),
                 ),
               ),
+        actions: [
+          if (!canPop)
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Center(
+                child: GestureDetector(
+                  onTap: () => context.go('/user-account'),
+                  child: const Text(
+                    'John Doe',
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
       body: child,
       floatingActionButton: floatingActionButton,

@@ -228,9 +228,11 @@ class DashboardContent extends ConsumerWidget {
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
     return Card(
-      child: Padding(
+      child: Container(
+        height: 100, // Fixed height for identical sizes
         padding: const EdgeInsets.all(16),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, color: color, size: 24),
             const SizedBox(height: 8),
@@ -242,10 +244,15 @@ class DashboardContent extends ConsumerWidget {
                 color: color,
               ),
             ),
-            Text(
-              title,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-              textAlign: TextAlign.center,
+            const SizedBox(height: 4),
+            Flexible(
+              child: Text(
+                title,
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
