@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class UserAccountScreen extends StatelessWidget {
   const UserAccountScreen({super.key});
@@ -10,7 +11,13 @@ class UserAccountScreen extends StatelessWidget {
         title: const Text('User Account'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            if (Navigator.of(context).canPop()) {
+              Navigator.of(context).pop();
+            } else {
+              context.go('/dashboard');
+            }
+          },
         ),
       ),
       body: const Center(

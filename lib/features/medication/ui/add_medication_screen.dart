@@ -979,6 +979,7 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                       hintText: '2.0',
                       border: OutlineInputBorder(),
                       helperText: 'Volume of diluent to add',
+                      prefixIcon: Icon(Icons.water_drop, size: 18),
                     ),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     onChanged: (value) {
@@ -994,6 +995,7 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                       hintText: '2.1',
                       border: OutlineInputBorder(),
                       helperText: 'Total volume after reconstitution',
+                      prefixIcon: Icon(Icons.science, size: 18),
                     ),
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     onChanged: (value) {
@@ -1002,6 +1004,91 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                   ),
                 ),
               ],
+            ),
+            const SizedBox(height: 16),
+            // Stability Information Section
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.amber.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: Colors.amber.withOpacity(0.4)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.schedule, color: Colors.amber[800], size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Stability After Reconstitution',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: Colors.amber[800],
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Once reconstituted, how long is the medication stable?',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Colors.amber[700],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextFormField(
+                          decoration: const InputDecoration(
+                            labelText: 'Stability Period',
+                            hintText: '24',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          keyboardType: TextInputType.number,
+                          onChanged: (value) {
+                            // Store stability period
+                          },
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: DropdownButtonFormField<String>(
+                          decoration: const InputDecoration(
+                            labelText: 'Time Unit',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          items: const [
+                            DropdownMenuItem(value: 'hours', child: Text('Hours')),
+                            DropdownMenuItem(value: 'days', child: Text('Days')),
+                            DropdownMenuItem(value: 'weeks', child: Text('Weeks')),
+                          ],
+                          onChanged: (value) {
+                            // Store time unit
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.thermostat, size: 16, color: Colors.amber[700]),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Storage: Refrigerated (2-8°C)',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.amber[700],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -1103,38 +1190,103 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   List<Widget> _buildPenFields() {
     return [
       const SizedBox(height: 16),
-      Row(
-        children: [
-          Expanded(
-            child: TextFormField(
-              decoration: const InputDecoration(
-                labelText: 'Units per Pen',
-                hintText: '300',
-                border: OutlineInputBorder(),
-                helperText: 'Total units in each pen',
+      Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.purple.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.purple.withOpacity(0.3)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.medical_services, color: Colors.purple, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'Injection Pen Information',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Colors.purple[800],
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Injection pens can be pre-filled (single-use) or use replaceable cartridges (multi-use). Configure the pen type and cartridge information.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: Colors.purple[700],
               ),
-              keyboardType: TextInputType.number,
+            ),
+            const SizedBox(height: 16),
+            // Pen Type Selection
+            DropdownButtonFormField<String>(
+              decoration: const InputDecoration(
+                labelText: 'Pen Type',
+                border: OutlineInputBorder(),
+                helperText: 'Select the type of injection pen',
+              ),
+              items: const [
+                DropdownMenuItem(value: 'single-use', child: Text('Single-Use Pre-filled')),
+                DropdownMenuItem(value: 'multi-use', child: Text('Multi-Use with Cartridges')),
+              ],
               onChanged: (value) {
-                // Store units per pen
+                setState(() {
+                  // Store pen type - will add to model later
+                });
               },
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: TextFormField(
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: 'Units per Pen Cartridge',
+                      hintText: '300',
+                      border: OutlineInputBorder(),
+                      helperText: 'Total units per pen or cartridge',
+                    ),
+                    keyboardType: TextInputType.number,
+                    onChanged: (value) {
+                      // Store units per pen cartridge
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: 'Total Volume (mL)',
+                      hintText: '3.0',
+                      border: OutlineInputBorder(),
+                      helperText: 'Total volume to track',
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    onChanged: (value) {
+                      // Store total volume
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
               decoration: const InputDecoration(
                 labelText: 'Dose Increment',
                 hintText: '1',
                 border: OutlineInputBorder(),
-                helperText: 'Minimum dose increment',
+                helperText: 'Minimum dose increment (units per click)',
               ),
               keyboardType: TextInputType.number,
               onChanged: (value) {
                 // Store dose increment
               },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     ];
   }
