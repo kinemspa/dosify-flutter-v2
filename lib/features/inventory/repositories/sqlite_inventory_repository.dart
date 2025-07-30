@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'package:sqflite/sqflite.dart';
 import 'package:uuid/uuid.dart';
 import '../../../core/data/services/database_service.dart';
 import '../../../core/data/models/inventory_entry.dart';

@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../core/data/repositories/medication_repository.dart';
-import '../../../core/data/models/medication.dart' as CoreMedication;
-import '../../../core/di/service_locator.dart';
+import '../../../core/data/models/medication.dart' as core_medication;
 import '../../../core/utils/number_formatter.dart';
 import '../providers/medication_providers.dart';
 
@@ -146,7 +144,7 @@ class MedicationContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildMedicationsList(BuildContext context, List<CoreMedication.Medication> medications) {
+  Widget _buildMedicationsList(BuildContext context, List<core_medication.Medication> medications) {
     if (medications.isEmpty) {
       return Center(
         child: Column(
@@ -194,7 +192,7 @@ return GestureDetector(
     );
   }
 
-  Widget _buildMedicationCard(BuildContext context, CoreMedication.Medication medication) {
+  Widget _buildMedicationCard(BuildContext context, core_medication.Medication medication) {
     final strength = NumberFormatter.formatNumber(medication.strength);
     
     return Card(
@@ -231,7 +229,7 @@ return GestureDetector(
     );
   }
 
-  Widget? _buildAlertBadge(BuildContext context, CoreMedication.Medication medication) {
+  Widget? _buildAlertBadge(BuildContext context, core_medication.Medication medication) {
     if (medication.isLowStock || medication.isExpiringSoon || medication.isExpired) {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -252,55 +250,55 @@ return GestureDetector(
     return null;
   }
 
-  Color _getTypeColor(BuildContext context, CoreMedication.MedicationType type) {
+  Color _getTypeColor(BuildContext context, core_medication.MedicationType type) {
     switch (type) {
-      case CoreMedication.MedicationType.tablet:
+      case core_medication.MedicationType.tablet:
         return Colors.blue;
-      case CoreMedication.MedicationType.capsule:
+      case core_medication.MedicationType.capsule:
         return Colors.green;
-      case CoreMedication.MedicationType.liquid:
+      case core_medication.MedicationType.liquid:
         return Colors.cyan;
-      case CoreMedication.MedicationType.injection:
+      case core_medication.MedicationType.injection:
         return Colors.red;
-      case CoreMedication.MedicationType.peptide:
+      case core_medication.MedicationType.peptide:
         return Colors.purple;
-      case CoreMedication.MedicationType.cream:
+      case core_medication.MedicationType.cream:
         return Colors.orange;
-      case CoreMedication.MedicationType.patch:
+      case core_medication.MedicationType.patch:
         return Colors.teal;
-      case CoreMedication.MedicationType.inhaler:
+      case core_medication.MedicationType.inhaler:
         return Colors.indigo;
-      case CoreMedication.MedicationType.drops:
+      case core_medication.MedicationType.drops:
         return Colors.lightBlue;
-      case CoreMedication.MedicationType.spray:
+      case core_medication.MedicationType.spray:
         return Colors.amber;
     }
   }
 
-  IconData _getTypeIcon(BuildContext context, CoreMedication.MedicationType type) {
+  IconData _getTypeIcon(BuildContext context, core_medication.MedicationType type) {
     switch (type) {
-      case CoreMedication.MedicationType.tablet:
-      case CoreMedication.MedicationType.capsule:
+      case core_medication.MedicationType.tablet:
+      case core_medication.MedicationType.capsule:
         return Icons.medication;
-      case CoreMedication.MedicationType.liquid:
+      case core_medication.MedicationType.liquid:
         return Icons.water_drop;
-      case CoreMedication.MedicationType.injection:
-      case CoreMedication.MedicationType.peptide:
+      case core_medication.MedicationType.injection:
+      case core_medication.MedicationType.peptide:
         return Icons.medication_liquid;
-      case CoreMedication.MedicationType.cream:
+      case core_medication.MedicationType.cream:
         return Icons.healing;
-      case CoreMedication.MedicationType.patch:
+      case core_medication.MedicationType.patch:
         return Icons.local_pharmacy;
-      case CoreMedication.MedicationType.inhaler:
+      case core_medication.MedicationType.inhaler:
         return Icons.air;
-      case CoreMedication.MedicationType.drops:
+      case core_medication.MedicationType.drops:
         return Icons.opacity;
-      case CoreMedication.MedicationType.spray:
+      case core_medication.MedicationType.spray:
         return Icons.water;
     }
   }
 
-  Color _getAlertColor(BuildContext context, CoreMedication.Medication medication) {
+  Color _getAlertColor(BuildContext context, core_medication.Medication medication) {
     if (medication.isExpired) {
       return Colors.red;
     } else if (medication.isExpiringSoon) {
@@ -311,7 +309,7 @@ return GestureDetector(
     return Colors.grey;
   }
 
-  String _getAlertText(BuildContext context, CoreMedication.Medication medication) {
+  String _getAlertText(BuildContext context, core_medication.Medication medication) {
     if (medication.isExpired) {
       return 'EXPIRED';
     } else if (medication.isExpiringSoon) {
@@ -322,13 +320,13 @@ return GestureDetector(
     return '';
   }
 
-  Widget _buildQuickActionDashboard(BuildContext context, List<CoreMedication.Medication> medications) {
+  Widget _buildQuickActionDashboard(BuildContext context, List<core_medication.Medication> medications) {
   final lowStockMeds = medications.where((med) => med.isLowStock).length;
     final expiringMeds = medications.where((med) => med.isExpiringSoon || med.isExpired).length;
     final activeMeds = medications.length;
     final injectableMeds = medications.where((med) => 
-      med.type == CoreMedication.MedicationType.injection || 
-      med.type == CoreMedication.MedicationType.peptide).length;
+      med.type == core_medication.MedicationType.injection || 
+      med.type == core_medication.MedicationType.peptide).length;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -506,7 +504,7 @@ return GestureDetector(
     );
   }
 
-  void _showFilteredMedications(BuildContext context, String title, List<CoreMedication.Medication> medications) {
+  void _showFilteredMedications(BuildContext context, String title, List<core_medication.Medication> medications) {
     if (medications.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

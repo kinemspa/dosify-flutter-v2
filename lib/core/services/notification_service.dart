@@ -103,12 +103,12 @@ class NotificationService {
     try {
       final warningDate = expirationDate.subtract(Duration(days: warningDays));
       
-      developer.log('Scheduling expiration warning for $medicationName', 
+      developer.log('Scheduling expiration warning for $medicationName (warning on $warningDate)', 
           name: 'NotificationService');
       
       // TODO: Implement expiration warning notification
       if (kDebugMode) {
-        print('EXPIRATION WARNING: $medicationName expires on $expirationDate');
+        print('EXPIRATION WARNING: $medicationName expires on $expirationDate (warning scheduled for $warningDate)');
       }
       
     } catch (e, stackTrace) {

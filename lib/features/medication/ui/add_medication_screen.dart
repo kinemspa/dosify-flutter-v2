@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/medication.dart';
-import '../../../core/data/repositories/medication_repository.dart';
-import '../../../core/data/models/medication.dart' as CoreMedication;
-import '../../../core/di/service_locator.dart';
+import '../../../core/data/models/medication.dart' as core_medication;
 import '../../../core/utils/responsive_utils.dart';
 import '../providers/medication_providers.dart';
 import 'package:go_router/go_router.dart';
@@ -694,28 +692,28 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
   }
 
   // Convert our feature medication model to core data model
-  CoreMedication.Medication _convertToCoreMedication(Medication medication) {
+  core_medication.Medication _convertToCoreMedication(Medication medication) {
     // Map MedicationType from feature to core
-    CoreMedication.MedicationType coreType;
+    core_medication.MedicationType coreType;
     switch (medication.type) {
       case MedicationType.tablet:
-        coreType = CoreMedication.MedicationType.tablet;
+        coreType = core_medication.MedicationType.tablet;
         break;
       case MedicationType.capsule:
-        coreType = CoreMedication.MedicationType.capsule;
+        coreType = core_medication.MedicationType.capsule;
         break;
       case MedicationType.injection:
-        coreType = CoreMedication.MedicationType.injection;
+        coreType = core_medication.MedicationType.injection;
         break;
       case MedicationType.topical:
-        coreType = CoreMedication.MedicationType.cream;
+        coreType = core_medication.MedicationType.cream;
         break;
       case MedicationType.liquid:
-        coreType = CoreMedication.MedicationType.liquid;
+        coreType = core_medication.MedicationType.liquid;
         break;
     }
 
-    return CoreMedication.Medication(
+    return core_medication.Medication(
       id: medication.id,
       name: medication.name,
       type: coreType,

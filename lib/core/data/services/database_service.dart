@@ -220,7 +220,7 @@ class DatabaseService {
   // Helper method to handle database operations with consistent error handling
   Future<T> executeQuery<T>(Future<T> Function() query, {String? operation}) async {
     try {
-      final db = await database;
+      await database; // Ensure database is initialized
       return await query();
     } catch (e, stackTrace) {
       final operationName = operation ?? 'database operation';

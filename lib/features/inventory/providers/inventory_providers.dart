@@ -82,15 +82,15 @@ final inventoryDashboardDataProvider = FutureProvider<InventoryDashboardData>((r
   ]);
 
   return InventoryDashboardData(
-    totalEntries: allEntries.length,
-    availableEntries: allEntries.where((e) => e.status == InventoryStatus.available).length,
-    lowStockCount: lowStockEntries.length,
-    expiringCount: expiringEntries.length,
-    expiredCount: expiredEntries.length,
-    totalValue: totalValue,
-    lowStockEntries: lowStockEntries,
-    expiringEntries: expiringEntries,
-    expiredEntries: expiredEntries,
+    totalEntries: (allEntries as List<InventoryEntry>).length,
+    availableEntries: (allEntries as List<InventoryEntry>).where((e) => e.status == InventoryStatus.available).length,
+    lowStockCount: (lowStockEntries as List<InventoryEntry>).length,
+    expiringCount: (expiringEntries as List<InventoryEntry>).length,
+    expiredCount: (expiredEntries as List<InventoryEntry>).length,
+    totalValue: totalValue as double,
+    lowStockEntries: lowStockEntries as List<InventoryEntry>,
+    expiringEntries: expiringEntries as List<InventoryEntry>,
+    expiredEntries: expiredEntries as List<InventoryEntry>,
   );
 });
 
