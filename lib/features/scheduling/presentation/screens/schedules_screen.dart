@@ -675,18 +675,28 @@ class _SchedulesContentState extends ConsumerState<SchedulesContent>
                 eventLoader: _getEventsForDay,
                 startingDayOfWeek: StartingDayOfWeek.monday,
                 calendarStyle: CalendarStyle(
-                  outsideDaysVisible: false,
-                  weekendTextStyle: const TextStyle(color: Colors.red),
-                  holidayTextStyle: const TextStyle(color: Colors.red),
-                  markerDecoration: BoxDecoration(
+                  todayDecoration: BoxDecoration(
+                    color: Theme.of(context).primaryColor.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  selectedDecoration: BoxDecoration(
                     color: Theme.of(context).primaryColor,
                     shape: BoxShape.circle,
                   ),
-                  markersMaxCount: 3,
+                  markerDecoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.secondary,
+                    shape: BoxShape.circle,
+                  ),
+                  markersMaxCount: 1,
+                  weekendTextStyle: TextStyle(color: Colors.red[600]),
+                  outsideDaysVisible: false,
                 ),
-                headerStyle: const HeaderStyle(
+                headerStyle: HeaderStyle(
                   formatButtonVisible: false,
                   titleCentered: true,
+                  titleTextStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  leftChevronIcon: const Icon(Icons.chevron_left, color: Colors.grey),
+                  rightChevronIcon: const Icon(Icons.chevron_right, color: Colors.grey),
                 ),
                 onDaySelected: (selectedDay, focusedDay) {
                   _showDaySchedule(selectedDay);
