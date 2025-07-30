@@ -390,49 +390,62 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              decoration: InputDecoration(
-                labelText: 'Strength per Tablet *',
-                hintText: 'e.g., 500',
-                border: const OutlineInputBorder(),
-                helperText: 'Enter strength excluding injection units',
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Strength is required';
-                }
-                final strength = double.tryParse(value);
-                if (strength == null || strength <= 0) {
-                  return 'Enter a valid strength';
-                }
-                return null;
-              },
-              onChanged: (value) {
-                setState(() {
-                  _formData.strength = double.tryParse(value);
-                });
-              },
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      labelText: 'Strength per Tablet *',
+                      hintText: 'e.g., 500',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8.0))),
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Strength is required';
+                      }
+                      final strength = double.tryParse(value);
+                      if (strength == null || strength <= 0) {
+                        return 'Enter a valid strength';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      setState(() {
+                        _formData.strength = double.tryParse(value);
+                      });
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: DropdownButtonFormField<StrengthUnit>(
+                    decoration: const InputDecoration(
+                      labelText: 'Unit',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8.0))),
+                    ),
+                    value: _formData.strengthUnit,
+                    items: [StrengthUnit.mg, StrengthUnit.g]
+                        .map((unit) => DropdownMenuItem(
+                              value: unit,
+                              child: Text(unit.displayName),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      if (value != null) {
+                        setState(() {
+                          _formData.strengthUnit = value;
+                        });
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
-            DropdownButtonFormField<StrengthUnit>(
-              decoration: const InputDecoration(
-                labelText: 'Unit',
-                border: OutlineInputBorder(),
-              ),
-              value: _formData.strengthUnit,
-              items: [StrengthUnit.mg, StrengthUnit.g]
-                  .map((unit) => DropdownMenuItem(
-                        value: unit,
-                        child: Text(unit.displayName),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() {
-                    _formData.strengthUnit = value;
-                  });
-                }
-              },
+            const SizedBox(height: 8),
+            const Text(
+              'Enter strength per tablet and select unit',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
         ),

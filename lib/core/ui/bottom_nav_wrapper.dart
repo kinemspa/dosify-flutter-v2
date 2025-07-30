@@ -21,29 +21,36 @@ class BottomNavWrapper extends StatelessWidget {
       appBar: AppBar(
         title: Text(title),
         centerTitle: true,
-        leading: canPop ? IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            } else {
-              context.go('/dashboard');
-            }
-          },
-        ) : GestureDetector(
-          onTap: () => context.go('/user-account'),
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: CircleAvatar(
-              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
-              child: Icon(
-                Icons.person,
-                color: Theme.of(context).primaryColor,
-                size: 20,
+        leading: canPop
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: () {
+                  if (Navigator.of(context).canPop()) {
+                    Navigator.of(context).pop();
+                  } else {
+                    context.go('/dashboard');
+                  }
+                },
+              )
+            : GestureDetector(
+                onTap: () => context.go('/user-account'),
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 16,
+                        backgroundImage: const NetworkImage('https://i.pravatar.cc/150?u=a042581f4e29026704d'),
+                      ),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'John Doe',
+                        style: TextStyle(fontSize: 12),
+                      )
+                    ],
+                  ),
+                ),
               ),
-            ),
-          ),
-        ),
       ),
       body: child,
       floatingActionButton: floatingActionButton,
