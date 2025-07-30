@@ -46,17 +46,13 @@ class DashboardContent extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildWelcomeHeader(),
-            const SizedBox(height: 24),
-            _buildMedicationOverviewCard(stats),
+            _buildMedicationOverviewCard(context, stats),
             const SizedBox(height: 20),
             _buildQuickStatsRow(stats),
             const SizedBox(height: 20),
-            _buildTodayOverviewCard(context),
+            _buildTodayOverviewCard(context, stats),
             const SizedBox(height: 20),
-            _buildQuickActionsGrid(context),
-            const SizedBox(height: 20),
-            _buildTestDataButton(context, ref),
+            _buildAdherenceChart(context),
           ],
         ),
       ),
@@ -119,56 +115,60 @@ class DashboardContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildMedicationOverviewCard(stats) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
+  Widget _buildMedicationOverviewCard(BuildContext context, stats) {
+    return GestureDetector(
+      onTap: () => context.go('/medications'),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(Icons.medication, color: Colors.blue),
                   ),
-                  child: const Icon(Icons.medication, color: Colors.blue),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Medication Overview',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        'Track your medication management',
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    ],
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Medication Overview',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        Text(
+                          'Track your medication management',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildMiniStat('Total Medications', '${stats.totalMedications}', Colors.blue),
-                ),
-                Expanded(
-                  child: _buildMiniStat('Active Schedules', '${stats.activeSchedules}', Colors.green),
-                ),
-                Expanded(
-                  child: _buildMiniStat('Next Dose', stats.nextDoseFormatted, Colors.purple),
-                ),
-              ],
-            ),
-          ],
+                  const Icon(Icons.arrow_forward_ios, color: Colors.grey),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _buildMiniStat('Total Medications', '${stats.totalMedications}', Colors.blue),
+                  ),
+                  Expanded(
+                    child: _buildMiniStat('Active Schedules', '${stats.activeSchedules}', Colors.green),
+                  ),
+                  Expanded(
+                    child: _buildMiniStat('Next Dose', stats.nextDoseFormatted, Colors.purple),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -253,7 +253,7 @@ class DashboardContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildTodayOverviewCard(BuildContext context) {
+  Widget _buildTodayOverviewCard(BuildContext context, stats) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -271,9 +271,20 @@ class DashboardContent extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 16),
-            _buildTodayItem('Morning Insulin', '8:00 AM', true),
-            _buildTodayItem('Vitamin D', '12:00 PM', false),
-            _buildTodayItem('Evening Medication', '6:00 PM', false),
+            stats.todaysDoses > 0
+                ? Column(
+                    children: [
+                      _buildTodayItem('Morning Insulin', '8:00 AM', true),
+                      _buildTodayItem('Vitamin D', '12:00 PM', false),
+                      _buildTodayItem('Evening Medication', '6:00 PM', false),
+                    ],
+                  )
+                : const Center(
+                    child: Text(
+                      'No medications scheduled for today',
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
             const SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
@@ -320,58 +331,15 @@ class DashboardContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickActionsGrid(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Quick Actions',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+  Widget _buildAdherenceChart(BuildContext context) {
+    // Placeholder for adherence chart
+    return const Card(
+      child: Padding(
+        padding: EdgeInsets.all(20),
+        child: Center(
+          child: Text('Adherence Chart - Coming Soon!'),
         ),
-        const SizedBox(height: 16),
-        GridView.count(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 1.3,
-          children: [
-            _buildActionCard(
-              context,
-              'Medications',
-              'Manage your medications',
-              Icons.medication,
-              Colors.blue,
-              '/medications',
-            ),
-            _buildActionCard(
-              context,
-              'Calculator',
-              'Reconstitution calculations',
-              Icons.calculate,
-              Colors.green,
-              '/calculator',
-            ),
-            _buildActionCard(
-              context,
-              'Schedules',
-              'Medication schedules',
-              Icons.schedule,
-              Colors.orange,
-              '/schedules',
-            ),
-            _buildActionCard(
-              context,
-              'Settings',
-              'App preferences',
-              Icons.settings,
-              Colors.purple,
-              '/settings',
-            ),
-          ],
-        ),
-      ],
+      ),
     );
   }
 

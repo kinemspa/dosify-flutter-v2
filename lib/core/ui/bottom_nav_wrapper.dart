@@ -30,7 +30,20 @@ class BottomNavWrapper extends StatelessWidget {
               context.go('/dashboard');
             }
           },
-        ) : null,
+        ) : GestureDetector(
+          onTap: () => context.go('/user-account'),
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: CircleAvatar(
+              backgroundColor: Theme.of(context).primaryColor.withOpacity(0.1),
+              child: Icon(
+                Icons.person,
+                color: Theme.of(context).primaryColor,
+                size: 20,
+              ),
+            ),
+          ),
+        ),
       ),
       body: child,
       floatingActionButton: floatingActionButton,
