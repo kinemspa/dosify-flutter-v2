@@ -184,6 +184,26 @@ class DatabaseService {
     }
   }
 
+  Future<void> clearAllData() async {
+    try {
+      developer.log('Clearing all data from database...', name: 'DatabaseService');
+      final db = await database;
+      
+      // Clear data from all tables (foreign key constraints will handle cascade deletes)
+      await db.delete('adherence_stats');
+      await db.delete('dose_records');
+      await db.delete('inventory_transactions');
+      await db.delete('inventory_entries');
+      await db.delete('medication_schedules');
+      await db.delete('medications');
+      
+      developer.log('All data cleared successfully', name: 'DatabaseService');
+    } catch (e, stackTrace) {
+      developer.log('Error clearing database: $e', name: 'DatabaseService', error: e, stackTrace: stackTrace);
+      throw DatabaseException('Failed to clear database: ${e.toString()}');
+    }
+  }
+
   Future<void> closeDatabase() async {
     try {
       if (_database != null) {

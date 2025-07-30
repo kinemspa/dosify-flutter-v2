@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/dashboard_providers.dart';
 import '../../../test_data_script.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -30,34 +32,58 @@ class _DashboardScreenState extends State<DashboardScreen> {
 }
 
 // Content-only version for use with BottomNavWrapper
-class DashboardContent extends StatefulWidget {
+class DashboardContent extends ConsumerWidget {
   const DashboardContent({Key? key}) : super(key: key);
 
   @override
-  State<DashboardContent> createState() => _DashboardContentState();
-}
-
-class _DashboardContentState extends State<DashboardContent> {
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     print('Building DashboardContent...');
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildWelcomeHeader(),
-          const SizedBox(height: 24),
-          _buildMedicationOverviewCard(),
-          const SizedBox(height: 20),
-          _buildQuickStatsRow(),
-          const SizedBox(height: 20),
-          _buildTodayOverviewCard(),
-          const SizedBox(height: 20),
-          _buildQuickActionsGrid(),
-          const SizedBox(height: 20),
-          _buildTestDataButton(),
-        ],
+    final dashboardStats = ref.watch(dashboardStatsProvider);
+    
+    return dashboardStats.when(
+      data: (stats) => SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildWelcomeHeader(),
+            const SizedBox(height: 24),
+            _buildMedicationOverviewCard(stats),
+            const SizedBox(height: 20),
+            _buildQuickStatsRow(stats),
+            const SizedBox(height: 20),
+            _buildTodayOverviewCard(),
+            const SizedBox(height: 20),
+            _buildQuickActionsGrid(),
+            const SizedBox(height: 20),
+            _buildTestDataButton(context, ref),
+          ],
+        ),
+      ),
+      loading: () => const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text('Loading dashboard...'),
+          ],
+        ),
+      ),
+      error: (error, stack) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 64, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error: $error'),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () => ref.refresh(dashboardStatsProvider),
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -93,7 +119,7 @@ class _DashboardContentState extends State<DashboardContent> {
     );
   }
 
-  Widget _buildMedicationOverviewCard() {
+  Widget _buildMedicationOverviewCard(stats) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -132,13 +158,13 @@ class _DashboardContentState extends State<DashboardContent> {
             Row(
               children: [
                 Expanded(
-                  child: _buildMiniStat('Total Medications', '4', Colors.blue),
+                  child: _buildMiniStat('Total Medications', '${stats.totalMedications}', Colors.blue),
                 ),
                 Expanded(
-                  child: _buildMiniStat('Active Schedules', '2', Colors.green),
+                  child: _buildMiniStat('Active Schedules', '${stats.activeSchedules}', Colors.green),
                 ),
                 Expanded(
-                  child: _buildMiniStat('Next Dose', '2:30 PM', Colors.purple),
+                  child: _buildMiniStat('Next Dose', stats.nextDoseFormatted, Colors.purple),
                 ),
               ],
             ),
@@ -167,13 +193,13 @@ class _DashboardContentState extends State<DashboardContent> {
     );
   }
 
-  Widget _buildQuickStatsRow() {
+  Widget _buildQuickStatsRow(stats) {
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
             'Active Medications',
-            '4',
+            '${stats.totalMedications}',
             Icons.medication,
             Colors.blue,
           ),
@@ -182,7 +208,7 @@ class _DashboardContentState extends State<DashboardContent> {
         Expanded(
           child: _buildStatCard(
             'Due Today',
-            '3',
+            '${stats.todaysDoses}',
             Icons.schedule,
             Colors.orange,
           ),
@@ -191,7 +217,7 @@ class _DashboardContentState extends State<DashboardContent> {
         Expanded(
           child: _buildStatCard(
             'Low Stock',
-            '1',
+            '${stats.lowStockCount}',
             Icons.warning,
             Colors.red,
           ),
@@ -407,7 +433,7 @@ class _DashboardContentState extends State<DashboardContent> {
     );
   }
 
-  Widget _buildTestDataButton() {
+  Widget _buildTestDataButton(BuildContext context, WidgetRef ref) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -428,23 +454,21 @@ class _DashboardContentState extends State<DashboardContent> {
               onPressed: () async {
                 try {
                   await addTestData();
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Test data added successfully!'),
-                        backgroundColor: Colors.green,
-                      ),
-                    );
-                  }
+                  // Refresh dashboard stats after adding test data
+                  ref.refresh(dashboardStatsProvider);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Test data added successfully!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
                 } catch (e) {
-                  if (mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error adding test data: $e'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error adding test data: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
                 }
               },
               child: const Text('Add Test Data'),

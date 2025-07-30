@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../../core/di/service_locator.dart';
+import '../../../core/data/services/database_service.dart';
+import '../../../core/data/repositories/medication_repository.dart';
+import '../../inventory/repositories/inventory_repository.dart';
+import '../../scheduling/data/repositories/schedule_repository.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({Key? key}) : super(key: key);
@@ -314,12 +319,7 @@ class _SettingsContentState extends State<SettingsContent> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Clear data feature coming soon'),
-                  backgroundColor: Colors.red,
-                ),
-              );
+              _clearAllData();
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Clear All', style: TextStyle(color: Colors.white)),
@@ -400,5 +400,30 @@ class _SettingsContentState extends State<SettingsContent> {
         ],
       ),
     );
+  }
+
+  Future<void> _clearAllData() async {
+    try {
+      final dbService = getIt<DatabaseService>();
+      await dbService.clearAllData();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('All data cleared successfully.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error clearing data: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
