@@ -52,9 +52,9 @@ class DashboardContent extends ConsumerWidget {
             const SizedBox(height: 20),
             _buildQuickStatsRow(stats),
             const SizedBox(height: 20),
-            _buildTodayOverviewCard(),
+            _buildTodayOverviewCard(context),
             const SizedBox(height: 20),
-            _buildQuickActionsGrid(),
+            _buildQuickActionsGrid(context),
             const SizedBox(height: 20),
             _buildTestDataButton(context, ref),
           ],
@@ -253,7 +253,7 @@ class DashboardContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildTodayOverviewCard() {
+  Widget _buildTodayOverviewCard(BuildContext context) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -320,7 +320,7 @@ class DashboardContent extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickActionsGrid() {
+  Widget _buildQuickActionsGrid(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -338,6 +338,7 @@ class DashboardContent extends ConsumerWidget {
           childAspectRatio: 1.3,
           children: [
             _buildActionCard(
+              context,
               'Medications',
               'Manage your medications',
               Icons.medication,
@@ -345,6 +346,7 @@ class DashboardContent extends ConsumerWidget {
               '/medications',
             ),
             _buildActionCard(
+              context,
               'Calculator',
               'Reconstitution calculations',
               Icons.calculate,
@@ -352,6 +354,7 @@ class DashboardContent extends ConsumerWidget {
               '/calculator',
             ),
             _buildActionCard(
+              context,
               'Schedules',
               'Medication schedules',
               Icons.schedule,
@@ -359,6 +362,7 @@ class DashboardContent extends ConsumerWidget {
               '/schedules',
             ),
             _buildActionCard(
+              context,
               'Settings',
               'App preferences',
               Icons.settings,
@@ -372,6 +376,7 @@ class DashboardContent extends ConsumerWidget {
   }
 
   Widget _buildActionCard(
+    BuildContext context,
     String title,
     String subtitle,
     IconData icon,
