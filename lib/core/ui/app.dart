@@ -11,6 +11,8 @@ import '../../features/calculator/ui/reconstitution_calculator_screen.dart';
 import '../../features/scheduling/presentation/screens/schedules_screen.dart';
 import '../../features/scheduling/presentation/screens/add_schedule_screen.dart';
 import '../../features/settings/ui/settings_screen.dart';
+import '../../features/user_account/ui/user_account_screen.dart';
+import '../../features/inventory/ui/inventory_screen.dart';
 
 class DosifyApp extends StatelessWidget {
   const DosifyApp({super.key});
@@ -92,6 +94,14 @@ final _router = GoRouter(
     GoRoute(
       path: '/calculator',
       builder: (context, state) => const ReconstitutionCalculatorScreen(),
+    ),
+    GoRoute(
+      path: '/user-account',
+      builder: (context, state) => const UserAccountScreen(),
+    ),
+    GoRoute(
+      path: '/inventory',
+      builder: (context, state) => const InventoryScreen(),
     ),
   ],
 );
