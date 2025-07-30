@@ -333,26 +333,36 @@ return GestureDetector(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Stats Row
+          // Stats Row - Enhanced Cards
           Row(
             children: [
               Expanded(
-                child: _buildStatCard(
+                child: _buildEnhancedStatCard(
                   context,
-                  'Total Medications',
+                  'Your Medications',
                   activeMeds.toString(),
-                  Icons.medication,
+                  'Active prescriptions',
+                  Icons.medication_outlined,
                   Colors.blue,
+                  () => {}, // Make tappable later
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _buildStatCard(
+                child: _buildEnhancedStatCard(
                   context,
-                  'Injectable Types',
+                  'Injectable Meds',
                   injectableMeds.toString(),
-                  Icons.medication_liquid,
+                  'Require injection',
+                  Icons.vaccines_outlined,
                   Colors.purple,
+                  () => _showFilteredMedications(
+                    context,
+                    'Injectable Medications',
+                    medications.where((med) => 
+                      med.type == core_medication.MedicationType.injection || 
+                      med.type == core_medication.MedicationType.peptide).toList(),
+                  ),
                 ),
               ),
             ],
@@ -392,12 +402,8 @@ return GestureDetector(
               ),
               const SizedBox(width: 8),
               Expanded(
-                child: _buildActionButton(
+                child: _buildCalculatorButton(
                   context,
-                  'Calculator',
-                  '',
-                  Icons.calculate_outlined,
-                  Colors.green,
                   () {
                     // Navigate to calculator
                     context.go('/calculator');
@@ -407,6 +413,140 @@ return GestureDetector(
             ],
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildEnhancedStatCard(BuildContext context, String title, String value, String subtitle, IconData icon, Color color, VoidCallback onTap) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                color.withOpacity(0.15),
+                color.withOpacity(0.05),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: color.withOpacity(0.2)),
+            boxShadow: [
+              BoxShadow(
+                color: color.withOpacity(0.1),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, color: color, size: 20),
+                  ),
+                  const Spacer(),
+                  Icon(Icons.arrow_forward_ios, color: color.withOpacity(0.6), size: 16),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey[800],
+                ),
+              ),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCalculatorButton(BuildContext context, VoidCallback onTap) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.green.withOpacity(0.2),
+                Colors.green.withOpacity(0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.green.withOpacity(0.3)),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.green.withOpacity(0.3),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: const Icon(Icons.calculate, color: Colors.white, size: 20),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Calculator',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green[700],
+                ),
+                textAlign: TextAlign.center,
+              ),
+              Text(
+                'Reconstitution',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontSize: 10,
+                  color: Colors.green[600],
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
