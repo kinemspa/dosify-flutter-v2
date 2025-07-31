@@ -596,7 +596,7 @@ class SqliteScheduleRepository implements ScheduleRepository {
   }
 
   @override
-  Future<int> generateMissingDoseRecords() async {
+  Future<int> generateMissingDoseRecords() async {
     try {
       final activeSchedules = await getActiveSchedules();
       int generated = 0;

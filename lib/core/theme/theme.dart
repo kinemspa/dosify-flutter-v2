@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:dynamic_color/dynamic_color.dart';
 
 class AppTheme {
   // Medical-themed color palette

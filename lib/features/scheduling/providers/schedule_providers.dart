@@ -1,6 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/di/service_locator.dart';
 import '../data/repositories/schedule_repository.dart';
+import '../data/repositories/sqlite_schedule_repository.dart';
 import '../models/medication_schedule.dart';
 import '../models/dose_record.dart';
 

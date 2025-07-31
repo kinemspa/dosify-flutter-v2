@@ -77,6 +77,10 @@ class BottomNavWrapper extends StatelessWidget {
             label: 'Medications',
           ),
           BottomNavigationBarItem(
+            icon: Icon(Icons.inventory),
+            label: 'Inventory',
+          ),
+          BottomNavigationBarItem(
             icon: Icon(Icons.schedule),
             label: 'Schedules',
           ),
@@ -98,9 +102,12 @@ class BottomNavWrapper extends StatelessWidget {
         context.go('/medications');
         break;
       case 2:
-        context.go('/schedules');
+        context.go('/inventory');
         break;
       case 3:
+        context.go('/schedules');
+        break;
+      case 4:
         context.go('/settings');
         break;
     }
@@ -112,10 +119,12 @@ class BottomNavWrapper extends StatelessWidget {
       return 0;
     } else if (location.contains('/medications')) {
       return 1;
-    } else if (location.contains('/schedules')) {
+    } else if (location.contains('/inventory')) {
       return 2;
-    } else if (location.contains('/settings')) {
+    } else if (location.contains('/schedules')) {
       return 3;
+    } else if (location.contains('/settings')) {
+      return 4;
     }
     return 0;
   }

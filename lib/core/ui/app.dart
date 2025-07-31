@@ -101,7 +101,10 @@ final _router = GoRouter(
     ),
     GoRoute(
       path: '/inventory',
-      builder: (context, state) => const InventoryScreen(),
+      builder: (context, state) => const BottomNavWrapper(
+        title: 'Inventory',
+        child: InventoryContent(),
+      ),
     ),
   ],
 );
