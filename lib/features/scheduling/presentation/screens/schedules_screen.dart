@@ -58,14 +58,6 @@ class _SchedulesContentState extends ConsumerState<SchedulesContent>
               children: [
                 const SizedBox(height: 24),
                 Text(
-                  'Medication Schedules',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
                   'Manage your medication schedules and track adherence',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                     color: Colors.white.withValues(alpha: 0.9),

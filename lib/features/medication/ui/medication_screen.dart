@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/data/models/medication.dart' as core_medication;
 import '../../../core/utils/number_formatter.dart';
 import '../providers/medication_providers.dart';
+import '../../calculator/ui/reconstitution_calculator_screen.dart';
 
 class MedicationScreen extends ConsumerWidget {
   const MedicationScreen({Key? key}) : super(key: key);
@@ -47,35 +48,51 @@ class MedicationScreen extends ConsumerWidget {
 }
 
 // Content-only version for use with BottomNavWrapper
-class MedicationContent extends ConsumerWidget {
+class MedicationContent extends ConsumerStatefulWidget {
   const MedicationContent({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final medicationsAsyncValue = ref.watch(medicationListProvider);
+  ConsumerState<MedicationContent> createState() => _MedicationContentState();
+}
 
-    return medicationsAsyncValue.when(
-      data: (medications) => Column(children: [
-        // Quick Action Dashboard
-        _buildQuickActionDashboard(context, medications),
-        // Medications List
-        Expanded(child: _buildMedicationsList(context, medications)),
-      ]),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.error_outline, size: 48, color: Colors.red),
-            const SizedBox(height: 16),
-            Text('Error loading medications', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Text(e.toString(), style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            ElevatedButton(onPressed: () => ref.read(medicationListProvider.notifier).refresh(), child: const Text('Try Again')),
+class _MedicationContentState extends ConsumerState<MedicationContent> with TickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Medications', icon: Icon(Icons.medication, size: 18)),
+            Tab(text: 'Supplies', icon: Icon(Icons.inventory, size: 18)),
+            Tab(text: 'Calculator', icon: Icon(Icons.calculate, size: 18)),
           ],
         ),
-      ),
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildMedicationsTab(),
+              _buildSuppliesTab(),
+              _buildCalculatorTab(),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -709,6 +726,166 @@ return GestureDetector(
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildMedicationsTab() {
+    final medicationsAsyncValue = ref.watch(medicationListProvider);
+
+    return medicationsAsyncValue.when(
+      data: (medications) => Column(children: [
+        // Quick Action Dashboard without Injectable Meds
+        _buildUpdatedQuickActionDashboard(context, medications),
+        // Medications List
+        Expanded(child: _buildMedicationsList(context, medications)),
+      ]),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 16),
+            Text('Error loading medications', style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(e.toString(), style: Theme.of(context).textTheme.bodySmall, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ElevatedButton(onPressed: () => ref.read(medicationListProvider.notifier).refresh(), child: const Text('Try Again')),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSuppliesTab() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.inventory,
+            size: 64,
+            color: Colors.grey,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Supplies Management',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Track medical supplies and inventory',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () => context.go('/inventory'),
+            icon: const Icon(Icons.add),
+            label: const Text('View Inventory'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCalculatorTab() {
+    // Import the calculator screen content directly
+    return const ReconstitutionCalculatorContent();
+  }
+
+  Widget _buildUpdatedQuickActionDashboard(BuildContext context, List<core_medication.Medication> medications) {
+    final lowStockMeds = medications.where((med) => med.isLowStock).length;
+    final expiringMeds = medications.where((med) => med.isExpiringSoon || med.isExpired).length;
+    final activeMeds = medications.length;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Stats Row - Updated without Injectable Meds
+          Row(
+            children: [
+              Expanded(
+                child: _buildEnhancedStatCard(
+                  context,
+                  'Your Medications',
+                  activeMeds.toString(),
+                  'Active prescriptions',
+                  Icons.medication_outlined,
+                  Colors.blue,
+                  () => {}, // Make tappable later
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildEnhancedStatCard(
+                  context,
+                  'Stock Alerts',
+                  (lowStockMeds + expiringMeds).toString(),
+                  'Need attention',
+                  Icons.warning_amber_outlined,
+                  Colors.orange,
+                  () => _showFilteredMedications(
+                    context,
+                    'Medications Needing Attention',
+                    medications.where((med) => med.isLowStock || med.isExpiringSoon || med.isExpired).toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Action Buttons Row
+          Row(
+            children: [
+              Expanded(
+                child: _buildActionButton(
+                  context,
+                  'Low Stock',
+                  lowStockMeds.toString(),
+                  Icons.inventory_2_outlined,
+                  Colors.orange,
+                  () => _showFilteredMedications(
+                    context,
+                    'Low Stock Medications',
+                    medications.where((med) => med.isLowStock).toList(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildActionButton(
+                  context,
+                  'Expiring',
+                  expiringMeds.toString(),
+                  Icons.schedule_outlined,
+                  Colors.red,
+                  () => _showFilteredMedications(
+                    context,
+                    'Expiring Medications',
+                    medications.where((med) => med.isExpiringSoon || med.isExpired).toList(),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _buildActionButton(
+                  context,
+                  'Add Med',
+                  '',
+                  Icons.add_circle_outlined,
+                  Colors.green,
+                  () => context.go('/medications/add'),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

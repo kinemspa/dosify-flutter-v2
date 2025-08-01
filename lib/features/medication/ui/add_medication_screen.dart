@@ -120,10 +120,17 @@ class _AddMedicationScreenState extends ConsumerState<AddMedicationScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                _formData.previewText,
+                                _formData.previewText.isEmpty 
+                                    ? 'Enter medication name to begin...'
+                                    : _formData.previewText,
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                  color: _formData.previewText.isEmpty 
+                                      ? Colors.grey[600]
+                                      : Theme.of(context).colorScheme.onSurface,
                                   height: 1.5,
+                                  fontStyle: _formData.previewText.isEmpty 
+                                      ? FontStyle.italic
+                                      : FontStyle.normal,
                                 ),
                               ),
                               if (_formData.isValid) ...[

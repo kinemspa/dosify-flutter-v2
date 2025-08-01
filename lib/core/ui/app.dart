@@ -45,11 +45,7 @@ final _router = GoRouter(
       path: '/medications',
       builder: (context, state) => BottomNavWrapper(
         title: 'Medications',
-        floatingActionButton: FloatingActionButton(
-          heroTag: "medicationsFAB",
-          onPressed: () => context.go('/medications/add'),
-          child: const Icon(Icons.add),
-        ),
+        floatingActionButton: _buildMultiChoiceFAB(context),
         child: const MedicationContent(),
       ),
       routes: [
@@ -108,3 +104,133 @@ final _router = GoRouter(
     ),
   ],
 );
+
+Widget _buildMultiChoiceFAB(BuildContext context) {
+  return FloatingActionButton(
+    heroTag: "medicationsFAB",
+    onPressed: () => _showAddOptions(context),
+    child: const Icon(Icons.add),
+  );
+}
+
+void _showAddOptions(BuildContext context) {
+  showModalBottomSheet(
+    context: context,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    ),
+    builder: (context) => Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            'Add New Item',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              Expanded(
+                child: _buildAddOptionCard(
+                  context,
+                  'Medication',
+                  'Add a new medication',
+                  Icons.medication,
+                  Colors.blue,
+                  () {
+                    Navigator.of(context).pop();
+                    context.go('/medications/add');
+                  },
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildAddOptionCard(
+                  context,
+                  'Supply',
+                  'Add medical supply',
+                  Icons.inventory,
+                  Colors.green,
+                  () {
+                    Navigator.of(context).pop();
+                    context.go('/inventory');
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildAddOptionCard(
+  BuildContext context,
+  String title,
+  String subtitle,
+  IconData icon,
+  Color color,
+  VoidCallback onTap,
+) {
+  return Material(
+    color: Colors.transparent,
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: color.withOpacity(0.3)),
+          borderRadius: BorderRadius.circular(16),
+          color: color.withOpacity(0.1),
+        ),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                icon,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Colors.grey[600],
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}

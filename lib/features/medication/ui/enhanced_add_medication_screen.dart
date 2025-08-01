@@ -397,6 +397,7 @@ class _EnhancedAddMedicationScreenState extends State<EnhancedAddMedicationScree
       hint: 'Enter medication name',
       required: true,
       icon: Icons.medical_services,
+      helperText: 'Enter the full brand name or generic name of your medication',
     ));
 
     // Type-specific strength fields
@@ -423,6 +424,7 @@ class _EnhancedAddMedicationScreenState extends State<EnhancedAddMedicationScree
       hint: 'Add any additional notes',
       maxLines: 3,
       icon: Icons.note,
+      helperText: 'Add special instructions, storage requirements, or other important notes',
     ));
 
     return Column(children: widgets);
@@ -437,6 +439,7 @@ class _EnhancedAddMedicationScreenState extends State<EnhancedAddMedicationScree
     int maxLines = 1,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
+    String? helperText,
   }) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -446,7 +449,26 @@ class _EnhancedAddMedicationScreenState extends State<EnhancedAddMedicationScree
           labelText: required ? '$label *' : label,
           hintText: hint,
           prefixIcon: icon != null ? Icon(icon) : null,
-          border: const OutlineInputBorder(),
+          suffixIcon: helperText != null 
+              ? Tooltip(
+                  message: helperText,
+                  child: Icon(Icons.info_outline, color: Colors.grey[600]),
+                )
+              : null,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Colors.grey[300]!),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+          ),
+          filled: true,
+          fillColor: Colors.grey[50],
         ),
         maxLines: maxLines,
         keyboardType: keyboardType,
@@ -484,60 +506,106 @@ class _EnhancedAddMedicationScreenState extends State<EnhancedAddMedicationScree
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            flex: 2,
-            child: TextFormField(
-              controller: _strengthController,
-              decoration: const InputDecoration(
-                labelText: 'Strength *',
-                hintText: 'Enter amount',
-                prefixIcon: Icon(Icons.medication),
-                border: OutlineInputBorder(),
+          Row(
+            children: [
+              Expanded(
+                flex: 2,
+                child: TextFormField(
+                  controller: _strengthController,
+                  decoration: InputDecoration(
+                    labelText: 'Strength *',
+                    hintText: 'Enter amount',
+                    prefixIcon: const Icon(Icons.medication),
+                    suffixIcon: Tooltip(
+                      message: 'Enter the active ingredient amount per unit (tablet, mL, etc.)',
+                      child: Icon(Icons.info_outline, color: Colors.grey[600]),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [
+                    FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
+                  ],
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Strength is required';
+                    }
+                    if (double.tryParse(value) == null || double.parse(value) <= 0) {
+                      return 'Enter valid strength';
+                    }
+                    return null;
+                  },
+                  onChanged: (_) => setState(() {}),
+                ),
               ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
-              ],
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Strength is required';
-                }
-                if (double.tryParse(value) == null || double.parse(value) <= 0) {
-                  return 'Enter valid strength';
-                }
-                return null;
-              },
-              onChanged: (_) => setState(() {}),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                flex: 1,
+                child: DropdownButtonFormField<StrengthUnit>(
+                  value: _selectedStrengthUnit,
+                  decoration: InputDecoration(
+                    labelText: 'Unit *',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey[300]!),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
+                  ),
+                  items: availableUnits.map((unit) {
+                    return DropdownMenuItem(
+                      value: unit,
+                      child: Text(_getStrengthUnitString(unit)),
+                    );
+                  }).toList(),
+                  onChanged: (unit) {
+                    setState(() {
+                      _selectedStrengthUnit = unit;
+                    });
+                  },
+                  validator: (value) {
+                    if (value == null) {
+                      return 'Required';
+                    }
+                    return null;
+                  },
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            flex: 1,
-            child: DropdownButtonFormField<StrengthUnit>(
-              value: _selectedStrengthUnit,
-              decoration: const InputDecoration(
-                labelText: 'Unit *',
-                border: OutlineInputBorder(),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Text(
+                'Strength value and unit (e.g., 500 mg per tablet)',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey[600],
+                ),
               ),
-              items: availableUnits.map((unit) {
-                return DropdownMenuItem(
-                  value: unit,
-                  child: Text(_getStrengthUnitString(unit)),
-                );
-              }).toList(),
-              onChanged: (unit) {
-                setState(() {
-                  _selectedStrengthUnit = unit;
-                });
-              },
-              validator: (value) {
-                if (value == null) {
-                  return 'Required';
-                }
-                return null;
-              },
             ),
           ),
         ],
@@ -617,6 +685,7 @@ class _EnhancedAddMedicationScreenState extends State<EnhancedAddMedicationScree
               FilteringTextInputFormatter.allow(RegExp(r'^\d*\.?\d*')),
             ],
             icon: Icons.science,
+            helperText: 'Maximum volume the vial can hold to prevent overfilling during reconstitution',
           ));
           break;
 
@@ -649,62 +718,131 @@ class _EnhancedAddMedicationScreenState extends State<EnhancedAddMedicationScree
     final availableStockUnits = mockMedication.availableStockUnits;
 
     return [
+      // Inventory Management Header
       Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: Row(
           children: [
-            Expanded(
-              flex: 2,
-              child: TextFormField(
-                controller: _stockController,
-                decoration: const InputDecoration(
-                  labelText: 'Current Stock *',
-                  hintText: 'Enter quantity',
-                  prefixIcon: Icon(Icons.inventory),
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                inputFormatters: [
-                  FilteringTextInputFormatter.digitsOnly,
-                ],
-                validator: (value) {
-                  if (value == null || value.trim().isEmpty) {
-                    return 'Stock is required';
-                  }
-                  if (int.tryParse(value) == null || int.parse(value) < 0) {
-                    return 'Enter valid stock';
-                  }
-                  return null;
-                },
-                onChanged: (_) => setState(() {}),
+            Icon(Icons.inventory_2_outlined, color: Colors.grey[700]),
+            const SizedBox(width: 8),
+            Text(
+              'Inventory Management',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey[700],
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              flex: 1,
-              child: DropdownButtonFormField<StockUnit>(
-                value: _selectedStockUnit,
-                decoration: const InputDecoration(
-                  labelText: 'Unit *',
-                  border: OutlineInputBorder(),
+            const SizedBox(width: 8),
+            Tooltip(
+              message: 'Track your medication inventory and set low stock alerts to never run out',
+              child: Icon(Icons.info_outline, color: Colors.grey[500], size: 20),
+            ),
+          ],
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: TextFormField(
+                    controller: _stockController,
+                    decoration: InputDecoration(
+                      labelText: 'Current Stock *',
+                      hintText: 'Enter quantity',
+                      prefixIcon: const Icon(Icons.inventory),
+                      suffixIcon: Tooltip(
+                        message: 'Total number of units currently in your possession',
+                        child: Icon(Icons.info_outline, color: Colors.grey[600]),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                    keyboardType: TextInputType.number,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                    ],
+                    validator: (value) {
+                      if (value == null || value.trim().isEmpty) {
+                        return 'Current stock is required';
+                      }
+                      if (int.tryParse(value) == null || int.parse(value) < 0) {
+                        return 'Enter valid stock quantity';
+                      }
+                      return null;
+                    },
+                    onChanged: (_) => setState(() {}),
+                  ),
                 ),
-                items: availableStockUnits.map((unit) {
-                  return DropdownMenuItem(
-                    value: unit,
-                    child: Text(_getStockUnitString(unit)),
-                  );
-                }).toList(),
-                onChanged: (unit) {
-                  setState(() {
-                    _selectedStockUnit = unit;
-                  });
-                },
-                validator: (value) {
-                  if (value == null) {
-                    return 'Required';
-                  }
-                  return null;
-                },
+                const SizedBox(width: 12),
+                Expanded(
+                  flex: 1,
+                  child: DropdownButtonFormField<StockUnit>(
+                    value: _selectedStockUnit,
+                    decoration: InputDecoration(
+                      labelText: 'Unit *',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Colors.grey[300]!),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
+                    ),
+                    items: availableStockUnits.map((unit) {
+                      return DropdownMenuItem(
+                        value: unit,
+                        child: Text(_getStockUnitString(unit)),
+                      );
+                    }).toList(),
+                    onChanged: (unit) {
+                      setState(() {
+                        _selectedStockUnit = unit;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null) {
+                        return 'Required';
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Text(
+                  'How many tablets/vials/units you currently have in stock',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
               ),
             ),
           ],
@@ -717,6 +855,7 @@ class _EnhancedAddMedicationScreenState extends State<EnhancedAddMedicationScree
         keyboardType: TextInputType.number,
         inputFormatters: [FilteringTextInputFormatter.digitsOnly],
         icon: Icons.warning,
+        helperText: 'Get notified when your medication stock falls below this number',
       ),
     ];
   }
@@ -727,11 +866,27 @@ class _EnhancedAddMedicationScreenState extends State<EnhancedAddMedicationScree
       child: InkWell(
         onTap: _selectExpirationDate,
         child: InputDecorator(
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Expiration Date',
             hintText: 'Select expiration date',
-            prefixIcon: Icon(Icons.calendar_today),
-            border: OutlineInputBorder(),
+            prefixIcon: const Icon(Icons.calendar_today),
+            suffixIcon: Tooltip(
+              message: 'Set expiration date to get alerts before medication expires',
+              child: Icon(Icons.info_outline, color: Colors.grey[600]),
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.grey[50],
           ),
           child: Text(
             _expirationDate != null
