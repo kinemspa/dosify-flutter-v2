@@ -20,11 +20,41 @@ class AddEditSupplyForm extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text(supply == null ? 'Add Supply' : 'Edit Supply'),
+        actions: [
+          if (supply != null)
+            IconButton(
+              icon: const Icon(Icons.delete),
+              onPressed: () async {
+                final delete = await showDialog<bool>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('Delete Supply'),
+                    content: const Text('Are you sure you want to delete this supply?'),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.of(context).pop(true),
+                        child: const Text('Delete'),
+                      ),
+                    ],
+                  ),
+                );
+                if (delete ?? false) {
+                  ref.read(supplyManagementProvider.notifier).deleteSupply(supply!.id);
+                  Navigator.of(context).pop();
+                }
+              },
+            ),
+        ],
       ),
       body: Form(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextFormField(
                 initialValue: formState.name,
@@ -77,11 +107,67 @@ class AddEditSupplyForm extends ConsumerWidget {
               ),
               const SizedBox(height: 16.0),
               TextFormField(
-                initialValue: formState.notes ?? '',
-                decoration: const InputDecoration(labelText: 'Notes (Optional)'),
-                onChanged: formNotifier.updateNotes,
+                initialValue: formState.costPerUnit?.toString() ?? '',
+                decoration: const InputDecoration(
+                  labelText: 'Cost Per Unit (Optional)',
+                  prefixText: '\$',
+                ),
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                onChanged: (value) {
+                  if (value.isNotEmpty) {
+                    formNotifier.updateCostPerUnit(double.tryParse(value));
+                  } else {
+                    formNotifier.updateCostPerUnit(null);
+                  }
+                },
               ),
               const SizedBox(height: 16.0),
+              TextFormField(
+                initialValue: formState.supplier ?? '',
+                decoration: const InputDecoration(labelText: 'Supplier (Optional)'),
+                onChanged: formNotifier.updateSupplier,
+              ),
+              const SizedBox(height: 16.0),
+              // Expiration Date Picker
+              ListTile(
+                title: const Text('Expiration Date (Optional)'),
+                subtitle: Text(
+                  formState.expirationDate != null
+                      ? '${formState.expirationDate!.day}/${formState.expirationDate!.month}/${formState.expirationDate!.year}'
+                      : 'No expiration date set',
+                ),
+                trailing: const Icon(Icons.calendar_today),
+                onTap: () async {
+                  final date = await showDatePicker(
+                    context: context,
+                    initialDate: formState.expirationDate ?? DateTime.now().add(const Duration(days: 365)),
+                    firstDate: DateTime.now(),
+                    lastDate: DateTime.now().add(const Duration(days: 365 * 10)),
+                  );
+                  if (date != null) {
+                    formNotifier.updateExpirationDate(date);
+                  }
+                },
+              ),
+              if (formState.expirationDate != null)
+                Padding(
+                  padding: const EdgeInsets.only(left: 16.0),
+                  child: TextButton(
+                    onPressed: () => formNotifier.updateExpirationDate(null),
+                    child: const Text('Clear expiration date'),
+                  ),
+                ),
+              const SizedBox(height: 16.0),
+              TextFormField(
+                initialValue: formState.notes ?? '',
+                decoration: const InputDecoration(
+                  labelText: 'Notes (Optional)',
+                  alignLabelWithHint: true,
+                ),
+                maxLines: 3,
+                onChanged: formNotifier.updateNotes,
+              ),
+              const SizedBox(height: 24.0),
               ElevatedButton(
                 onPressed: formState.isValid ? () {
                   if (supply == null) {

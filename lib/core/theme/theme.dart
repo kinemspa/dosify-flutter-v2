@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // Teal/Dark Teal color palette for medical app
-  static const Color primaryColor = Color(0xFF00695C); // Dark Teal
+  static const Color primaryColor = Color(0xFF00796B); // Slightly more Bluish Teal
   static const Color primaryColorDark = Color(0xFF004D40); // Darker Teal
   static const Color secondaryColor = Color(0xFF26A69A); // Teal accent
   static const Color tertiaryColor = Color(0xFF4DB6AC); // Light Teal

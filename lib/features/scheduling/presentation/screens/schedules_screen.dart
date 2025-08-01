@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../../core/data/models/medication.dart';
+import 'package:go_router/go_router.dart';
 import '../../../medication/providers/medication_providers.dart';
 import '../../models/dose_record.dart';
 import '../../models/medication_schedule.dart';

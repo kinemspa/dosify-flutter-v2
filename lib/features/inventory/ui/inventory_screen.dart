@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../../../core/data/models/inventory_entry.dart';
+import '../../supplies/ui/supplies_management_screen.dart';
 import '../providers/inventory_providers.dart';
 
 class InventoryScreen extends ConsumerWidget {
@@ -17,7 +18,11 @@ class InventoryScreen extends ConsumerWidget {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              // TODO: Navigate to add inventory entry screen
+Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const SuppliesManagementScreen(),
+                ),
+              );
             },
           ),
         ],
