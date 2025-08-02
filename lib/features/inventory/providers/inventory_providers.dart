@@ -88,6 +88,7 @@ final inventoryDashboardDataProvider = FutureProvider<InventoryDashboardData>((r
     expiringCount: (expiringEntries as List<InventoryEntry>).length,
     expiredCount: (expiredEntries as List<InventoryEntry>).length,
     totalValue: totalValue as double,
+    allEntries: allEntries as List<InventoryEntry>,
     lowStockEntries: lowStockEntries as List<InventoryEntry>,
     expiringEntries: expiringEntries as List<InventoryEntry>,
     expiredEntries: expiredEntries as List<InventoryEntry>,
@@ -102,6 +103,7 @@ class InventoryDashboardData {
   final int expiringCount;
   final int expiredCount;
   final double totalValue;
+  final List<InventoryEntry> allEntries;
   final List<InventoryEntry> lowStockEntries;
   final List<InventoryEntry> expiringEntries;
   final List<InventoryEntry> expiredEntries;
@@ -113,6 +115,7 @@ class InventoryDashboardData {
     required this.expiringCount,
     required this.expiredCount,
     required this.totalValue,
+    required this.allEntries,
     required this.lowStockEntries,
     required this.expiringEntries,
     required this.expiredEntries,

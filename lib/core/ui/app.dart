@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/theme.dart';
 import 'package:go_router/go_router.dart';
@@ -20,12 +21,21 @@ class DosifyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
-      child: MaterialApp.router(
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        routerConfig: _router,
-        debugShowCheckedModeBanner: false,
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: AppTheme.primaryColor,
+          systemNavigationBarIconBrightness: Brightness.light,
+        ),
+        child: MaterialApp.router(
+          title: 'Dosify - Clinical Management',
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: ThemeMode.system,
+          routerConfig: _router,
+          debugShowCheckedModeBanner: false,
+        ),
       ),
     );
   }
@@ -36,15 +46,12 @@ final _router = GoRouter(
   routes: [
     GoRoute(
       path: '/dashboard',
-      builder: (context, state) => const BottomNavWrapper(
-        title: 'Dosify',
-        child: DashboardContent(),
-      ),
+      builder: (context, state) => const DashboardScreen(),
     ),
     GoRoute(
-      path: '/medications',
+      path: '/inventory',
       builder: (context, state) => BottomNavWrapper(
-        title: 'Medications',
+        title: 'Inventory',
         floatingActionButton: _buildMultiChoiceFAB(context),
         child: const MedicationContent(),
       ),
@@ -96,9 +103,9 @@ final _router = GoRouter(
       builder: (context, state) => const UserAccountScreen(),
     ),
     GoRoute(
-      path: '/inventory',
+      path: '/medications',
       builder: (context, state) => const BottomNavWrapper(
-        title: 'Inventory',
+        title: 'Medications',
         child: InventoryContent(),
       ),
     ),
@@ -116,63 +123,84 @@ Widget _buildMultiChoiceFAB(BuildContext context) {
 void _showAddOptions(BuildContext context) {
   showModalBottomSheet(
     context: context,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
     builder: (context) => Container(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              borderRadius: BorderRadius.circular(2),
-            ),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black26,
+            blurRadius: 20,
+            offset: Offset(0, -5),
           ),
-          const SizedBox(height: 20),
-          Text(
-            'Add New Item',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: _buildAddOptionCard(
-                  context,
-                  'Medication',
-                  'Add a new medication',
-                  Icons.medication,
-                  Colors.blue,
-                  () {
-                    Navigator.of(context).pop();
-                    context.go('/medications/add');
-                  },
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _buildAddOptionCard(
-                  context,
-                  'Supply',
-                  'Add medical supply',
-                  Icons.inventory,
-                  Colors.green,
-                  () {
-                    Navigator.of(context).pop();
-                    context.go('/inventory');
-                  },
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 20),
         ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: const Color(0xFF94a3b8),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Add New Item',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF22465e),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Choose what you\'d like to add to your medical management',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: const Color(0xFF475569),
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildAddOptionCard(
+                    context,
+                    'Medication',
+                    'Add a new medication',
+                    Icons.medication,
+                    const Color(0xFF22465e),
+                    () {
+                      Navigator.of(context).pop();
+                      context.go('/inventory/add');
+                    },
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildAddOptionCard(
+                    context,
+                    'Supply',
+                    'Add medical supply',
+                    Icons.inventory,
+                    const Color(0xFFd25117),
+                    () {
+                      Navigator.of(context).pop();
+                      context.go('/inventory');
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+          ],
+        ),
       ),
     ),
   );

@@ -18,9 +18,16 @@ class BottomNavWrapper extends StatelessWidget {
     print('Building BottomNavWrapper with title: $title');
     final canPop = Navigator.of(context).canPop();
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: Text(title),
-        centerTitle: true,
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: Colors.white,
+          ),
+        ),
+        centerTitle: false,
+        titleSpacing: 8,
         leading: canPop
             ? IconButton(
                 icon: const Icon(Icons.arrow_back),
@@ -34,31 +41,32 @@ class BottomNavWrapper extends StatelessWidget {
               )
             : null,
         actions: [
-          if (!canPop) ...
-            [
-              Padding(
-                padding: const EdgeInsets.only(right: 8.0),
-                child: Center(
-                  child: GestureDetector(
-                    onTap: () => context.go('/user-account'),
-                    child: const Text(
-                      'John Doe',
-                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          if (!canPop) ...[
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: Center(
+                child: GestureDetector(
+                  onTap: () => context.go('/user-account'),
+                  child: Text(
+                    'John Doe', // Ideally personalize
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
                     ),
                   ),
                 ),
               ),
-              GestureDetector(
-                onTap: () => context.go('/user-account'),
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 16.0),
-                  child: CircleAvatar(
-                    radius: 16,
-                    backgroundImage: const NetworkImage('https://i.pravatar.cc/150?u=a042581f4e29026704d'),
-                  ),
+            ),
+            GestureDetector(
+              onTap: () => context.go('/user-account'),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16.0),
+                child: CircleAvatar(
+                  radius: 16,
+                  backgroundImage: const NetworkImage('https://i.pravatar.cc/150?u=a042581f4e29026704d'),
                 ),
               ),
-            ],
+            ),
+          ],
         ],
       ),
       body: child,
@@ -73,7 +81,7 @@ class BottomNavWrapper extends StatelessWidget {
             label: 'Dashboard',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.medication),
+            icon: Icon(Icons.inventory_2),
             label: 'Inventory',
           ),
           BottomNavigationBarItem(
@@ -95,7 +103,7 @@ class BottomNavWrapper extends StatelessWidget {
         context.go('/dashboard');
         break;
       case 1:
-        context.go('/medications');
+        context.go('/inventory');
         break;
       case 2:
         context.go('/schedules');
@@ -110,7 +118,7 @@ class BottomNavWrapper extends StatelessWidget {
     final String location = GoRouterState.of(context).uri.toString();
     if (location.contains('/dashboard')) {
       return 0;
-    } else if (location.contains('/medications')) {
+    } else if (location.contains('/inventory')) {
       return 1;
     } else if (location.contains('/schedules')) {
       return 2;

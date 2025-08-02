@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import '../../../../core/data/services/database_service.dart';
 import '../../../scheduling/models/medication_schedule.dart';
 import '../../../scheduling/models/dose_record.dart';
+import '../../models/adherence_stats.dart';
 import 'schedule_repository.dart';
 
 class SqliteScheduleRepository implements ScheduleRepository {

@@ -1,54 +1,76 @@
 import 'package:flutter/material.dart';
+import 'dart:developer' as developer;
 import 'core/di/service_locator.dart';
 import 'core/ui/app.dart';
-import 'core/theme/theme.dart';
-import 'features/dashboard/ui/simple_dashboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   try {
     // Initialize the service locator
-    print('Initializing service locator...');
+    developer.log('Initializing app...', name: 'Main');
     await setupServiceLocator();
-    print('Service locator initialized successfully!');
+    developer.log('Service locator initialized successfully!', name: 'Main');
     
-    // Initialize complete - no test data in production
-    
-    // Run the proper app with GoRouter
-    print('About to run DosifyApp...');
-    
-    // Create the app first to test if there are any build issues
-    try {
-      print('Creating DosifyApp instance...');
-      const app = DosifyApp();
-      print('DosifyApp instance created successfully!');
-      
-      print('Running app...');
-      runApp(app);
-      print('App started successfully!');
-    } catch (e) {
-      print('CAUGHT ERROR while creating the app: $e');
-      rethrow;
-    }
+    // Run the app
+    runApp(const DosifyApp());
     
   } catch (e, stackTrace) {
-    print('CAUGHT ERROR during app initialization: $e');
-    print('Stack trace: $stackTrace');
+    developer.log('Error during app initialization: $e', name: 'Main', error: e, stackTrace: stackTrace);
     
-    // Run a minimal app with error display
-    runApp(
-      MaterialApp(
-        home: Scaffold(
-          body: Center(
+    // Run a minimal error app
+    runApp(_ErrorApp(error: e.toString()));
+  }
+}
+
+// Error app for initialization failures
+class _ErrorApp extends StatelessWidget {
+  final String error;
+  
+  const _ErrorApp({required this.error});
+  
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Dosify - Error',
+      home: Scaffold(
+        appBar: AppBar(
+          title: const Text('Initialization Error'),
+          backgroundColor: Colors.red,
+          foregroundColor: Colors.white,
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.error, size: 64, color: Colors.red),
                 const SizedBox(height: 16),
-                const Text('App Initialization Error'),
-                const SizedBox(height: 8),
-                Text('$e'),
+                const Text(
+                  'App Initialization Failed',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    error,
+                    style: const TextStyle(fontFamily: 'monospace'),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    // Simple restart attempt (not fully functional but shows intent)
+                    developer.log('Restart attempted', name: 'ErrorApp');
+                  },
+                  child: const Text('Retry'),
+                ),
               ],
             ),
           ),
@@ -111,20 +133,3 @@ class MinimalDashboard extends StatelessWidget {
   }
 }
 
-// Simplified app using MaterialApp instead of GoRouter
-class SimplifiedDosifyApp extends StatelessWidget {
-  const SimplifiedDosifyApp({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    print('Building SimplifiedDosifyApp...');
-    return MaterialApp(
-      title: 'Dosify',
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
-      home: const SimpleDashboardScreen(),
-      debugShowCheckedModeBanner: false,
-    );
-  }
-}

@@ -114,65 +114,6 @@ class DoseRecord {
   }
 }
 
-@JsonSerializable(fieldRename: FieldRename.snake)
-class AdherenceStats {
-  final String medicationId;
-  final String? scheduleId;
-  final DateTime periodStart;
-  final DateTime periodEnd;
-  final int totalDoses;
-  final int takenDoses;
-  final int missedDoses;
-  final int onTimeDoses;
-  final int lateDoses;
-  final double adherenceRate; // Percentage of doses taken
-  final double onTimeRate; // Percentage of doses taken on time
-  final Duration averageDelay;
-  final Map<String, int> missedReasons; // Categorized reasons for missed doses
-  final DateTime calculatedAt;
-
-  const AdherenceStats({
-    required this.medicationId,
-    this.scheduleId,
-    required this.periodStart,
-    required this.periodEnd,
-    required this.totalDoses,
-    required this.takenDoses,
-    required this.missedDoses,
-    required this.onTimeDoses,
-    required this.lateDoses,
-    required this.adherenceRate,
-    required this.onTimeRate,
-    required this.averageDelay,
-    required this.missedReasons,
-    required this.calculatedAt,
-  });
-
-  factory AdherenceStats.fromJson(Map<String, dynamic> json) {
-    final mutableJson = Map<String, dynamic>.from(json);
-    
-    // Handle DateTime conversion from milliseconds since epoch
-    if (mutableJson['period_start'] is int) {
-      mutableJson['period_start'] = DateTime.fromMillisecondsSinceEpoch(mutableJson['period_start']).toIso8601String();
-    }
-    if (mutableJson['period_end'] is int) {
-      mutableJson['period_end'] = DateTime.fromMillisecondsSinceEpoch(mutableJson['period_end']).toIso8601String();
-    }
-    if (mutableJson['calculated_at'] is int) {
-      mutableJson['calculated_at'] = DateTime.fromMillisecondsSinceEpoch(mutableJson['calculated_at']).toIso8601String();
-    }
-    
-    if (mutableJson['missed_reasons'] is String) {
-      mutableJson['missed_reasons'] = Map<String, int>.from(
-        jsonDecode(mutableJson['missed_reasons'])
-      );
-    }
-    
-    return _$AdherenceStatsFromJson(mutableJson);
-  }
-
-  Map<String, dynamic> toJson() => _$AdherenceStatsToJson(this);
-}
 
 enum DoseStatus {
   scheduled,

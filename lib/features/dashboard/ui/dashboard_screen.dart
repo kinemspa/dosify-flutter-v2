@@ -11,11 +11,19 @@ class DashboardScreen extends StatefulWidget {
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _DashboardScreenState extends State<DashboardScreen> {
+class _DashboardScreenState extends State<DashboardScreen> with TickerProviderStateMixin {
+  late TabController _tabController;
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 4, vsync: this);
     print('Dashboard screen initialized');
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
 
   @override
@@ -24,35 +32,101 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return Scaffold(
       body: Column(
         children: [
-          // Header similar to Schedules Screen
+          // Modern Clinical Header with gradient like Schedules Screen
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.fromLTRB(20, 60, 20, 24),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
                 colors: [
                   Theme.of(context).primaryColor,
                   Theme.of(context).primaryColor.withOpacity(0.8),
                 ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 40), // for status bar space
                 _buildWelcomeHeader(),
-                const SizedBox(height: 16),
-                _buildSummaryCards(),
+                const SizedBox(height: 20),
+                _buildDashboardOverviewStats(),
               ],
             ),
           ),
-          const Expanded(
-            child: DashboardContent(),
+          
+          // Tab Bar
+          Container(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            child: TabBar(
+              controller: _tabController,
+              labelColor: Theme.of(context).primaryColor,
+              unselectedLabelColor: Colors.grey[600],
+              indicatorColor: Theme.of(context).primaryColor,
+              tabs: const [
+                Tab(text: 'Overview'),
+                Tab(text: 'Today'),
+                Tab(text: 'Activity'),
+                Tab(text: 'Analytics'),
+              ],
+            ),
+          ),
+          
+          // Tab Views
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildOverviewTab(),
+                _buildTodayTab(),
+                _buildActivityTab(),
+                _buildAnalyticsTab(),
+              ],
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: 0, // Dashboard is always selected
+        onTap: (index) => _onBottomNavTapped(context, index),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.dashboard),
+            label: 'Dashboard',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.inventory_2),
+            label: 'Inventory',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.schedule),
+            label: 'Schedules',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),
     );
+  }
+
+  void _onBottomNavTapped(BuildContext context, int index) {
+    switch (index) {
+      case 0:
+        // Already on dashboard
+        break;
+      case 1:
+        context.go('/inventory');
+        break;
+      case 2:
+        context.go('/schedules');
+        break;
+      case 3:
+        context.go('/settings');
+        break;
+    }
   }
 
   Widget _buildWelcomeHeader() {
@@ -69,26 +143,324 @@ class _DashboardScreenState extends State<DashboardScreen> {
     // TODO: Get username from user preferences/profile
     const String username = 'John Doe'; // Placeholder - should come from user data
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    return Row(
       children: [
-        Text(
-          '$greeting, $username',
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.white.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: const Icon(
+            Icons.dashboard_outlined,
             color: Colors.white,
+            size: 28,
           ),
         ),
-        const SizedBox(height: 4),
-        Text(
-          'Track your medications with precision',
-          style: const TextStyle(
-            fontSize: 16,
-            color: Colors.white70,
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '$greeting, $username',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Track your medications with precision',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Colors.white70,
+                ),
+              ),
+            ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDashboardOverviewStats() {
+    return Consumer(
+      builder: (context, ref, child) {
+        final dashboardStats = ref.watch(dashboardStatsProvider);
+        
+        return dashboardStats.when(
+          data: (stats) => Row(
+            children: [
+              Expanded(
+                child: _buildOverviewStat(
+                  context,
+                  '${stats.totalMedications}',
+                  'Active Medications',
+                  Icons.medication,
+                  const Color(0xFF0ea5e9),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildOverviewStat(
+                  context,
+                  '${stats.todaysDoses}',
+                  'Due Today',
+                  Icons.notifications_active,
+                  const Color(0xFFd25117),
+                ),
+              ),
+            ],
+          ),
+          loading: () => const SizedBox(
+            height: 80,
+            child: Center(child: CircularProgressIndicator(color: Colors.white)),
+          ),
+          error: (error, stack) => const SizedBox(
+            height: 80,
+            child: Center(
+              child: Text(
+                'Error loading stats',
+                style: TextStyle(color: Colors.white70),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildOverviewStat(BuildContext context, String value, String label, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.white, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Colors.white70,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+Widget _buildOverviewTab() {
+    return Consumer(
+      builder: (context, ref, child) {
+        final dashboardStats = ref.watch(dashboardStatsProvider);
+        
+        return dashboardStats.when(
+          data: (stats) => SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildOverviewSummaryCards(stats),
+                const SizedBox(height: 20),
+                _buildTodaysSchedule(context, stats),
+                const SizedBox(height: 20),
+                _buildQuickActions(context),
+              ],
+            ),
+          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stack) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text('Error: $error'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => ref.refresh(dashboardStatsProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildOverviewSummaryCards(stats) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildMiniOverviewCard(
+            'Active Medications',
+            '${stats.totalMedications}',
+            Icons.medication,
+            Colors.blue,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildMiniOverviewCard(
+            'Due Today',
+            '${stats.todaysDoses}',
+            Icons.schedule,
+            Colors.orange,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _buildMiniOverviewCard(
+            'Low Stock',
+            '${stats.lowStockCount}',
+            Icons.warning,
+            Colors.red,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMiniOverviewCard(String title, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: color, size: 24),
+          const SizedBox(height: 8),
+          Text(
+            value,
+            style: TextStyle(
+              fontSize: 20,
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 12,
+              color: Colors.grey,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTodayTab() {
+    return Consumer(
+      builder: (context, ref, child) {
+        final dashboardStats = ref.watch(dashboardStatsProvider);
+        
+        return dashboardStats.when(
+          data: (stats) => SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildTodaysSchedule(context, stats),
+                const SizedBox(height: 20),
+                _buildQuickActions(context),
+              ],
+            ),
+          ),
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, stack) => Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error_outline, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text('Error: $error'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () => ref.refresh(dashboardStatsProvider),
+                  child: const Text('Retry'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildActivityTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildRecentActivity(context),
+          const SizedBox(height: 20),
+          _buildTestDataButton(context),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAnalyticsTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildAdherenceChart(context),
+          const SizedBox(height: 20),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                children: [
+                  Icon(Icons.analytics_outlined, size: 64, color: Colors.grey[400]),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Advanced Analytics',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Detailed medication analytics and reports coming soon!',
+                    style: TextStyle(color: Colors.grey[600]),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -184,6 +556,73 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
     );
   }
+
+  // Methods needed for tab views
+  Widget _buildTodaysSchedule(BuildContext context, stats) {
+    return const DashboardContent();
+  }
+
+  Widget _buildQuickActions(BuildContext context) {
+    return const DashboardContent();
+  }
+
+  Widget _buildRecentActivity(BuildContext context) {
+    return const DashboardContent();
+  }
+
+  Widget _buildAdherenceChart(BuildContext context) {
+    return const DashboardContent();
+  }
+
+  Widget _buildTestDataButton(BuildContext context) {
+    return Consumer(
+      builder: (context, ref, child) {
+        return Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                const Text(
+                  'Test Data',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Add sample data to test the app functionality',
+                  style: TextStyle(color: Colors.grey),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: () async {
+                    try {
+                      await addTestData();
+                      // Refresh dashboard stats after adding test data
+                      ref.refresh(dashboardStatsProvider);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Test data added successfully!'),
+                          backgroundColor: Colors.green,
+                        ),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error adding test data: $e'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                  child: const Text('Add Test Data'),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }
 
 // Content-only version for use with BottomNavWrapper
@@ -250,47 +689,65 @@ class DashboardContent extends ConsumerWidget {
     if (stats.totalMedications == 0) {
       return GestureDetector(
         onTap: () => context.go('/medications'),
-        child: Card(
-          elevation: 3,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              gradient: LinearGradient(
-                colors: [
-                  Colors.grey[50]!,
-                  Colors.grey[100]!,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+        child: Container(
+          margin: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFF22465e).withOpacity(0.05),
+                const Color(0xFF22465e).withOpacity(0.1),
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Icon(
+            border: Border.all(
+              color: const Color(0xFF22465e).withOpacity(0.2),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF22465e).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
                     Icons.medication_outlined,
                     size: 48,
-                    color: Colors.grey[400],
+                    color: Color(0xFF22465e),
                   ),
-                  const SizedBox(height: 16),
-                  Text(
-                    'Add medications to start tracking',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
-                    ),
-                    textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'Add medications to start tracking',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: const Color(0xFF22465e),
+                    fontWeight: FontWeight.w600,
                   ),
-                  const SizedBox(height: 12),
-                  const Icon(Icons.arrow_forward_ios, color: Colors.grey),
-                ],
-              ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Begin your clinical medication management',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: const Color(0xFF475569),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
         ),
@@ -430,47 +887,70 @@ class DashboardContent extends ConsumerWidget {
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    return Container(
+      height: 120, // Reduced from 140
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          colors: [
+            color.withOpacity(0.08),
+            color.withOpacity(0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        border: Border.all(
+          color: color.withOpacity(0.2),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      child: Container(
-        height: 125, // Increased height to prevent overflow
-        padding: const EdgeInsets.all(12),
+      child: Padding(
+        padding: const EdgeInsets.all(12), // Reduced from 16
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(8), // Reduced from 12
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(8),
+                color: color.withOpacity(0.15),
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withOpacity(0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              child: Icon(icon, color: color, size: 24),
+              child: Icon(icon, color: color, size: 24), // Reduced from 28
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 8), // Reduced from 12
             Text(
               value,
               style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
+                fontSize: 20, // Reduced from 24
                 color: color,
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 4),
-            Flexible(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Colors.grey[700],
-                  fontWeight: FontWeight.w500,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+            const SizedBox(height: 2), // Reduced from 4
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 11, // Reduced from 12
+                color: Color(0xFF475569),
+                fontWeight: FontWeight.w500,
               ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

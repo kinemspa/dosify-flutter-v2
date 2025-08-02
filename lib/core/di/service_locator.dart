@@ -1,4 +1,5 @@
 import 'package:get_it/get_it.dart';
+import 'dart:developer' as developer;
 import '../data/services/database_service.dart';
 import '../data/repositories/medication_repository.dart';
 import '../../features/inventory/repositories/inventory_repository.dart';
@@ -12,15 +13,15 @@ final getIt = GetIt.instance;
 Future<void> setupServiceLocator() async {
   try {
     // Database service
-    print('Setting up database service...');
+    developer.log('Setting up database service...', name: 'ServiceLocator');
     getIt.registerSingleton<DatabaseService>(DatabaseService());
     
-    print('Initializing database...');
+    developer.log('Initializing database...', name: 'ServiceLocator');
     await getIt<DatabaseService>().initialize();
-    print('Database initialized successfully!');
+    developer.log('Database initialized successfully!', name: 'ServiceLocator');
 
     // Repositories
-    print('Setting up repositories...');
+    developer.log('Setting up repositories...', name: 'ServiceLocator');
     getIt.registerLazySingleton<MedicationRepository>(
       () => SqliteMedicationRepository(getIt<DatabaseService>()),
     );
@@ -33,9 +34,9 @@ Future<void> setupServiceLocator() async {
       () => SqliteScheduleRepository(getIt<DatabaseService>()),
     );
     
-    print('All services registered successfully!');
+    developer.log('All services registered successfully!', name: 'ServiceLocator');
   } catch (e) {
-    print('Error in setupServiceLocator: $e');
+    developer.log('Error in setupServiceLocator: $e', name: 'ServiceLocator', error: e);
     rethrow;
   }
 }

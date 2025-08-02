@@ -1,9 +1,11 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/di/service_locator.dart';
 import '../data/repositories/schedule_repository.dart';
 import '../repositories/sqlite_schedule_repository.dart';
 import '../models/medication_schedule.dart';
 import '../models/dose_record.dart';
+import '../models/adherence_stats.dart';
 
 part 'schedule_providers.g.dart';
 
@@ -267,6 +269,7 @@ Future<List<DoseRecord>> missedDoses(
     days: days,
   );
 }
+
 
 // Dashboard summary providers
 @riverpod

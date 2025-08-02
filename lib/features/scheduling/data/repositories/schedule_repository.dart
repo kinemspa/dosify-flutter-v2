@@ -1,5 +1,6 @@
 import '../../../scheduling/models/medication_schedule.dart';
 import '../../../scheduling/models/dose_record.dart';
+import '../../models/adherence_stats.dart';
 
 abstract class ScheduleRepository {
   // Schedule CRUD operations

@@ -11,32 +11,149 @@ class InventoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {    
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Inventory Management'),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const SuppliesManagementScreen(),
+      body: Column(
+        children: [
+          // Modern Clinical Header
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 60, 20, 24),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Theme.of(context).primaryColor,
+                  Theme.of(context).primaryColor.withOpacity(0.8),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.inventory_2_outlined,
+                    color: Colors.white,
+                    size: 28,
+                  ),
                 ),
-              );
-            },
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Inventory',
+                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Advanced stock & supply management',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.white70,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.3),
+                      width: 1,
+                    ),
+                  ),
+                  child: IconButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const SuppliesManagementScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(
+                      Icons.add,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Expanded(
+            child: InventoryContent(),
           ),
         ],
       ),
-      body: const InventoryContent(),
     );
   }
 }
 
-class InventoryContent extends ConsumerWidget {
+class InventoryContent extends ConsumerStatefulWidget {
   const InventoryContent({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<InventoryContent> createState() => _InventoryContentState();
+}
+
+class _InventoryContentState extends ConsumerState<InventoryContent> with TickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 4, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(text: 'Overview', icon: Icon(Icons.dashboard, size: 18)),
+            Tab(text: 'Stock', icon: Icon(Icons.inventory_2, size: 18)),
+            Tab(text: 'Alerts', icon: Icon(Icons.warning, size: 18)),
+            Tab(text: 'Reports', icon: Icon(Icons.analytics, size: 18)),
+          ],
+        ),
+        Expanded(
+          child: TabBarView(
+            controller: _tabController,
+            children: [
+              _buildOverviewTab(),
+              _buildStockTab(),
+              _buildAlertsTab(),
+              _buildReportsTab(),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildOverviewTab() {
     final inventoryDashboardData = ref.watch(inventoryDashboardDataProvider);
     
     return inventoryDashboardData.when(
@@ -387,5 +504,168 @@ class InventoryContent extends ConsumerWidget {
 
   String _formatDate(DateTime date) {
     return DateFormat('dd/MM/yyyy').format(date);
+  }
+
+  Widget _buildStockTab() {
+    final inventoryDashboardData = ref.watch(inventoryDashboardDataProvider);
+    
+    return inventoryDashboardData.when(
+      data: (data) => RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(inventoryDashboardDataProvider);
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Current Stock Levels',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'All inventory entries with current quantities and status.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Show all inventory entries
+            ...data.allEntries.map((entry) => Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: _buildInventoryEntryTile(context, entry),
+            )),
+          ],
+        ),
+      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stackTrace) => Center(
+        child: Text('Error: $error'),
+      ),
+    );
+  }
+
+  Widget _buildAlertsTab() {
+    final inventoryDashboardData = ref.watch(inventoryDashboardDataProvider);
+    
+    return inventoryDashboardData.when(
+      data: (data) => RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(inventoryDashboardDataProvider);
+        },
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            if (data.lowStockEntries.isNotEmpty) ...[
+              _buildInventorySection(
+                context,
+                'Low Stock Alerts',
+                data.lowStockEntries,
+                Colors.orange,
+                Icons.warning,
+              ),
+              const SizedBox(height: 16),
+            ],
+            if (data.expiringEntries.isNotEmpty) ...[
+              _buildInventorySection(
+                context,
+                'Expiring Soon',
+                data.expiringEntries,
+                Colors.amber,
+                Icons.schedule,
+              ),
+              const SizedBox(height: 16),
+            ],
+            if (data.expiredEntries.isNotEmpty) ...[
+              _buildInventorySection(
+                context,
+                'Expired Items',
+                data.expiredEntries,
+                Colors.red,
+                Icons.error,
+              ),
+            ],
+            if (data.lowStockEntries.isEmpty && data.expiringEntries.isEmpty && data.expiredEntries.isEmpty)
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.check_circle_outline,
+                      size: 64,
+                      color: Colors.green,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No Active Alerts',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'All inventory items are in good condition',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (error, stackTrace) => Center(
+        child: Text('Error: $error'),
+      ),
+    );
+  }
+
+  Widget _buildReportsTab() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(
+            Icons.analytics,
+            size: 64,
+            color: Colors.grey,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Inventory Reports',
+            style: Theme.of(context).textTheme.headlineSmall,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Detailed analytics and reporting coming soon',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Colors.grey[600],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            onPressed: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Reports feature coming soon!'),
+                ),
+              );
+            },
+            icon: const Icon(Icons.bar_chart),
+            label: const Text('Generate Report'),
+          ),
+        ],
+      ),
+    );
   }
 }
